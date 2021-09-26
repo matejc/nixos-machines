@@ -1,0 +1,37 @@
+---
+- name: Fetch latest
+  git:
+    repo: https://github.com/Arksine/moonraker.git
+    dest: /home/pi/moonraker
+    force: true
+    version: master
+  register: moonrakergit
+
+- name: Run install  # noqa no-handler
+  command:
+    cmd: ./install-moonraker.sh -c /home/pi/klipper_config/moonraker.conf
+    chdir: /home/pi/moonraker/scripts
+  when: moonrakergit.changed
+
+- name: Copy over cfg
+  template:
+    src: moonraker.conf
+    dest: /home/pi/klipper_config/moonraker.conf
+    mode: u=rw
+
+- name: Restart and enable service
+  become: true
+  service:
+    name: moonraker
+    state: restarted
+    enabled: true
+
+- name: Wait for successful start
+  uri:
+    url: "http://127.0.0.1:7125/printer/info"
+    method: GET
+    return_content: true
+  register: _result
+  until: '"\"state\": \"ready\"" in _result.content'
+  retries: 30  # retry X times
+  delay: 1  # pause for X sec b/w each call

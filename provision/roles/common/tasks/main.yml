@@ -1,0 +1,14 @@
+---
+- name: Ensure packages are installed
+  become: true
+  apt:
+    name:
+      - avahi-daemon
+      - python3-passlib
+    state: present
+
+- name: Set the hostname
+  become: true
+  hostname:
+    name: "{{ inventory_hostname_short }}"
+    use: debian

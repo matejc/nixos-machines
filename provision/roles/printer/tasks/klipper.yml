@@ -1,0 +1,78 @@
+---
+- name: Fetch latest
+  git:
+    repo: https://github.com/KevinOConnor/klipper
+    dest: /home/pi/klipper
+    force: true
+    version: master
+  register: klippergit
+
+- name: Run klipper install  # noqa no-handler
+  command:
+    cmd: ./scripts/install-octopi.sh
+    chdir: /home/pi/klipper
+  when: klippergit.changed
+
+- name: Change startup args
+  become: true
+  lineinfile:
+    path: /etc/default/klipper
+    regexp: '^KLIPPY_ARGS=(.*)$'
+    line: 'KLIPPY_ARGS="/home/pi/klipper/klippy/klippy.py /home/pi/klipper_config/printer.cfg -l /tmp/klippy.log -a /tmp/klippy_uds"'
+
+- name: Make directories
+  file:
+    dest: "{{ item }}"
+    state: directory
+    mode: u=rwx
+  with_items:
+    - /home/pi/klipper_config
+    - /home/pi/gcode_files
+
+- name: Copy over .config
+  copy:
+    src: .config
+    dest: /home/pi/klipper/.config
+    mode: u=rw
+
+- name: Copy over cfg
+  copy:
+    src: printer.cfg
+    dest: /home/pi/klipper_config/printer.cfg
+    mode: u=rw
+
+- name: Set mcu serial
+  lineinfile:
+    path: /home/pi/klipper_config/printer.cfg
+    regexp: '^serial: /dev(.*)$'
+    line: "serial: {{ printer_mcu_serial }}"
+
+- name: Stop and enable service
+  become: true
+  service:
+    name: klipper
+    state: stopped
+    enabled: true
+
+- name: Remove log
+  file:
+    path: /tmp/klippy.log
+    state: absent
+
+- name: Flash printer  # noqa no-handler
+  command:
+    cmd: make flash FLASH_DEVICE={{ printer_mcu_serial }}
+    chdir: /home/pi/klipper
+  when: klippergit.changed
+
+- name: Start service
+  become: true
+  service:
+    name: klipper
+    state: started
+
+- name: Wait for successful start
+  wait_for:
+    path: "/tmp/klippy.log"
+    search_regex: "^Start printer at (.*)$"
+    state: present

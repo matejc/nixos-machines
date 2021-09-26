@@ -1,0 +1,138 @@
+---
+- name: Install packages
+  become: true
+  apt:
+    name:
+      - python3-openssl
+    state: present
+
+- name: Make directory
+  become: true
+  file:
+    dest: "{{ client_certs_dir }}"
+    state: directory
+    mode: u=rwx
+
+- name: Create CA key
+  become: true
+  community.crypto.openssl_privatekey:
+    path: "{{ client_certs_dir }}/ca.key"
+    force: "{{ client_certs_force }}"
+  register: client_certs_ca_key
+
+- name: Create the CA CSR
+  become: true
+  community.crypto.openssl_csr:
+    path: "{{ client_certs_dir }}/ca.csr"
+    privatekey_path: "{{ client_certs_ca_key.filename }}"
+    # constraints and usage required by CA
+    basic_constraints_critical: true
+    basic_constraints:
+      - CA:TRUE
+      - pathlen:0
+    key_usage:
+      - digitalSignature
+      - cRLSign
+      - keyCertSign
+    common_name: "{{ client_certs_host }}"
+    force: "{{ client_certs_force }}"
+  register: client_certs_ca_csr
+
+- name: Sign the CA CSR
+  become: true
+  openssl_certificate:
+    path: "{{ client_certs_dir }}/ca.crt"
+    csr_path: "{{ client_certs_ca_csr.filename }}"
+    privatekey_path: "{{ client_certs_ca_key.filename }}"
+    provider: selfsigned
+    force: "{{ client_certs_force }}"
+  register: client_certs_ca_crt
+
+- name: Generate an OpenSSL private key with the default values (4096 bits, RSA)
+  become: true
+  community.crypto.openssl_privatekey:
+    path: "{{ client_certs_dir }}/server.key"
+    force: "{{ client_certs_force }}"
+  register: client_certs_server_key
+
+- name: Generate an OpenSSL Certificate Signing Request
+  become: true
+  community.crypto.openssl_csr:
+    path: "{{ client_certs_dir }}/server.csr"
+    privatekey_path: "{{ client_certs_dir }}/server.key"
+    key_usage:
+      - digitalSignature
+      - keyAgreement
+    extended_key_usage:
+      - clientAuth
+    common_name: "{{ client_certs_host }}"
+    # at beginning of each string (^), put prefix 'DNS:'
+    subject_alt_name: "{{ client_certs_domains_san | map('regex_replace', '^', 'DNS:') | list }}"
+    force: "{{ client_certs_force }}"
+  register: client_certs_server_csr
+
+- name: Generate an OpenSSL certificate
+  become: true
+  community.crypto.x509_certificate:
+    path: "{{ client_certs_dir }}/server.crt"
+    privatekey_path: "{{ client_certs_dir }}/server.key"
+    csr_path: "{{ client_certs_dir }}/server.csr"
+    ownca_path: "{{ client_certs_ca_crt.filename }}"
+    ownca_privatekey_path: "{{ client_certs_ca_key.filename }}"
+    provider: "ownca"
+    force: "{{ client_certs_force }}"
+  register: client_certs_server_crt
+
+- name: Generate an OpenSSL private key with the default values (4096 bits, RSA)
+  become: true
+  community.crypto.openssl_privatekey:
+    path: "{{ client_certs_dir }}/client.key"
+    force: "{{ client_certs_force }}"
+  register: client_certs_client_key
+
+- name: Generate an OpenSSL Certificate Signing Request
+  become: true
+  community.crypto.openssl_csr:
+    path: "{{ client_certs_dir }}/client.csr"
+    privatekey_path: "{{ client_certs_dir }}/client.key"
+    key_usage:
+      - digitalSignature
+      - keyAgreement
+    extended_key_usage:
+      - clientAuth
+    common_name: "{{ client_certs_host }}"
+    # at beginning of each string (^), put prefix 'DNS:'
+    subject_alt_name: "{{ client_certs_domains_san | map('regex_replace', '^', 'DNS:') | list }}"
+    force: "{{ client_certs_force }}"
+  register: client_certs_client_csr
+
+- name: Generate an OpenSSL certificate
+  become: true
+  community.crypto.x509_certificate:
+    path: "{{ client_certs_dir }}/client.crt"
+    privatekey_path: "{{ client_certs_dir }}/client.key"
+    csr_path: "{{ client_certs_dir }}/client.csr"
+    ownca_path: "{{ client_certs_ca_crt.filename }}"
+    ownca_privatekey_path: "{{ client_certs_ca_key.filename }}"
+    provider: "ownca"
+    force: "{{ client_certs_force }}"
+  register: client_certs_client_crt
+
+- name: Generate pkcs12 file
+  become: true
+  community.crypto.openssl_pkcs12:
+    action: export
+    path: "{{ client_certs_dir }}/{{ client_certs_host }}.p12"
+    friendly_name: "{{ client_certs_host }}"
+    privatekey_path: "{{ client_certs_client_key.filename }}"
+    certificate_path: "{{ client_certs_client_crt.filename }}"
+    other_certificates: "{{ client_certs_ca_crt.filename }}"
+    force: "{{ client_certs_force }}"
+    state: present
+  register: client_certs_client_p12
+
+- name: Copy client P12 file from remote to local
+  become: true
+  fetch:
+    src: "{{ client_certs_client_p12.filename }}"
+    dest: "{{ playbook_dir }}"

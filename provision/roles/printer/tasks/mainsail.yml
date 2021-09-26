@@ -1,5 +1,6 @@
 ---
-- name: Install nginx
+- name: Install packages
+  become: true
   apt:
     name:
       - nginx
@@ -15,7 +16,7 @@
 
 - name: Copy over nginx conf
   become: true
-  copy:
+  template:
     src: mainsail.conf
     dest: /etc/nginx/sites-enabled/default
     mode: u=rw
@@ -26,18 +27,16 @@
     dest: /home/pi/mainsail
     remote_src: true
 
-- name: Add users
-  become: true
-  htpasswd:
-    path: /etc/nginx/mainsail.passwd
-    name: "{{ item.username }}"
-    password: "{{ item.password }}"
-    owner: root
-    group: www-data
-    mode: 0640
-  with_items: "{{ printer_users }}"
-  loop_control:
-    label: "{{ item.username }}"
+- name: Generate client auth
+  include_tasks: client_certs.yml
+  vars:
+    client_certs_dir: "/etc/nginx/mainsail"
+    client_certs_host: "{{ ansible_host }}"
+    client_certs_force: false
+    client_certs_country: FI
+    client_certs_organization: Me
+    client_certs_domains_san:
+      - "{{ ansible_host }}"
 
 - name: Restart and enable service
   become: true
@@ -48,5 +47,5 @@
 
 - name: Wait for successful start
   wait_for:
-    port: 80
+    port: 443
     host: localhost

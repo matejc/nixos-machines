@@ -22,7 +22,7 @@ $ nix-shell image.nix --argstr password "root_password" --argstr wifi_name "some
 ### dd built image on SD card
 
 ```shell
-# dd if=./mnt/build/output-arm-image/raspios.img of=/dev/<storage_device>
+$ sudo dd if=./mnt/build/output-arm-image/raspios.img of=/dev/<storage_device>
 ```
 
 

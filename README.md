@@ -54,9 +54,6 @@ all:
           printer_mcu_serial: /dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
           printer_trusted_clients:
             - 192.168.0.0/24
-          printer_users:
-            - username: guest
-              password: guestguest
 ```
 
 ### Provision with Ansible

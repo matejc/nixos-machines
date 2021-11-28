@@ -33,5 +33,5 @@
     return_content: true
   register: _result
   until: '"\"state\": \"ready\"" in _result.content'
-  retries: 30  # retry X times
+  retries: 20  # retry X times
   delay: 1  # pause for X sec b/w each call

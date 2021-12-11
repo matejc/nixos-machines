@@ -1,6 +1,4 @@
 ---
-- name: Setup OS
-  include_tasks: os.yml
 - name: Setup Klipper
   include_tasks: klipper.yml
 - name: Setup Moonraker

@@ -1,0 +1,36 @@
+- name: Install dependencies
+  become: true
+  apt:
+    name:
+      - gnupg2
+      - software-properties-common
+
+- name: Add Docker apt key
+  become: true
+  apt_key:
+    url: https://download.docker.com/linux/raspbian/gpg
+    id: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+
+- name: Add Docker apt repository
+  become: true
+  apt_repository:
+    repo: deb [arch=armhf] https://download.docker.com/linux/raspbian {{ docker_release }} stable
+    filename: docker
+
+- name: Install Docker
+  become: true
+  apt:
+    name:
+      - docker-ce
+      - python3-setuptools
+      - python3-pip
+    install_recommends: false
+  notify: Restart Docker
+
+- name: Install Docker SDK for python
+  become: true
+  pip:
+    name: docker
+
+- name: Flush handlers
+  meta: flush_handlers

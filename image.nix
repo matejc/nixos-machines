@@ -11,7 +11,7 @@ with pkgs;
 with lib;
 let
   specialArgs = {};
-  qemuFlags = import <nixpkgs/nixos/lib/qemu-flags.nix> { inherit pkgs; };
+  qemuFlags = import <nixpkgs/nixos/lib/qemu-common.nix> { inherit pkgs lib; };
 
   armhf = import <nixpkgs> {
     crossSystem = (import <nixpkgs/lib>).systems.examples.raspberryPi;

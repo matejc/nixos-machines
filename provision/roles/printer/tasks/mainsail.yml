@@ -23,7 +23,7 @@
 
 - name: Fetch Mainsail
   unarchive:
-    src: https://github.com/meteyou/mainsail/releases/latest/download/mainsail.zip
+    src: https://github.com/mainsail-crew/mainsail/releases/latest/download/mainsail.zip
     dest: /home/pi/mainsail
     remote_src: true
 

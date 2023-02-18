@@ -25,4 +25,4 @@
   become: true
   hostname:
     name: "{{ inventory_hostname_short }}"
-    use: debian
+    use: systemd

@@ -19,6 +19,12 @@
     dest: /home/pi/klipper_config/moonraker.conf
     mode: u=rw
 
+- name: Set PolicyKit rules  # noqa no-handler
+  command:
+    cmd: ./set-policykit-rules.sh
+    chdir: /home/pi/moonraker/scripts
+  when: moonrakergit.changed
+
 - name: Restart and enable service
   become: true
   service:

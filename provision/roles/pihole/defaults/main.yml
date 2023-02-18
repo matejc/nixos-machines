@@ -1,4 +1,4 @@
 ---
 pihole_ftl_max_db_days: "180"
-pihole_image: "pihole/pihole:2021.11"
+pihole_image: "pihole/pihole:2022.07.1"
 pihole_timezone: "Europe/Helsinki"

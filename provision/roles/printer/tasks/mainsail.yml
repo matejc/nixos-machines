@@ -13,6 +13,7 @@
     mode: u=rwx
   with_items:
     - /home/pi/mainsail
+    - /home/pi/mainsail_backup
 
 - name: Copy over nginx conf
   become: true
@@ -20,6 +21,12 @@
     src: mainsail.conf
     dest: /etc/nginx/sites-enabled/default
     mode: u=rw
+
+- name: Backup Mainsail
+  copy:
+    src: /home/pi/mainsail/
+    dest: /home/pi/mainsail_backup/
+    remote_src: true
 
 - name: Fetch Mainsail
   unarchive:
@@ -49,3 +56,8 @@
   wait_for:
     port: 443
     host: localhost
+
+- name: Remove Mainsail Backup
+  file:
+    path: /home/pi/mainsail_backup/
+    state: absent

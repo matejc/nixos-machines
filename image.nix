@@ -1,12 +1,13 @@
 { pkgs ? import <nixpkgs> {}
 , system ? builtins.currentSystem
 , name ? "rpi"
-, nameservers ? []
 
 , password
 , authorized_keys ? [ "~/.ssh/id_rsa.pub" ]
-, wifi_name
-, wifi_password }:
+, wifi_name ? null
+, wifi_country ? "fi"
+, wifi_password ? null
+, vm_nameserver ? "1.1.1.1" }:
 with pkgs;
 with lib;
 let
@@ -18,12 +19,12 @@ let
   };
 
   qemuArmStatic = runCommand "qemu-arm-static" {
-    src = builtins.fetchurl https://github.com/multiarch/qemu-user-static/releases/download/v6.1.0-1/qemu-arm-static;
+    src = builtins.fetchurl "https://github.com/multiarch/qemu-user-static/releases/download/v7.2.0-1/qemu-aarch64-static";
     dontUnpack = true;
   } ''
     mkdir -p $out/bin
-    cp $src $out/bin/qemu-arm-static
-    chmod +x $out/bin/qemu-arm-static
+    cp $src $out/bin/qemu-aarch64-static
+    chmod +x $out/bin/qemu-aarch64-static
   '';
 
   packer-builder-arm-image = buildGoModule rec {
@@ -31,27 +32,24 @@ let
     src = fetchFromGitHub {
       owner = "solo-io";
       repo = "packer-builder-arm-image";
-      rev = "920cc8d3c01eb3f3a3889ec63441924de963b858";
-      sha256 = "0qdd22j6kflsydkxg37ijfb1qj7df67dvaq9zqyxqjq30yx1bxix";
+      rev = "v0.2.7";
+      sha256 = "sha256-jH4eHkcbqgcJEyD8uBxyAIQskMdYKxUDGclNfrc4+S4=";
     };
     vendorSha256 = null;
   };
 
-  resolvConf = writeText "resolv.conf" ''
-    ${concatMapStringsSep "\n" (i: "nameserver ${i}") nameservers}
-  '';
-
   buildHcl = writeText "build.pkr.hcl" ''
     source "arm-image" "raspios" {
-      iso_url = "https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2021-05-28/2021-05-07-raspios-buster-armhf-lite.zip"
-      iso_checksum = "c5dad159a2775c687e9281b1a0e586f7471690ae28f2f2282c90e7d59f64273c"
+      iso_url = "https://downloads.raspberrypi.org/raspios_lite_arm64/images/raspios_lite_arm64-2023-05-03/2023-05-03-raspios-bullseye-arm64-lite.img.xz"
+      iso_checksum = "bf982e56b0374712d93e185780d121e3f5c3d5e33052a95f72f9aed468d58fa7"
       output_filename = "./output-arm-image/raspios.img"
       target_image_size = 1024*1024*1024*2
       image_type = "raspberrypi"
+      resolv-conf = "copy-host"
       additional_chroot_mounts = [
-        ["bind", "/mnt/${name}", "/mnt/${name}"],
-        ${optionalString (nameservers != []) ''["bind", "${resolvConf}", "/etc/resolv.conf"]''}
+        ["bind", "/mnt/${name}", "/mnt/${name}"]
       ]
+      qemu_binary = "qemu-aarch64-static"
     }
     build {
       sources = [
@@ -91,9 +89,14 @@ let
         mkdir -p /mnt/${name}
         mount -t 9p -o trans=virtio,msize=10485760 ${name} /mnt/${name}
 
-        exec < /dev/${qemuFlags.qemuSerialDevice} > /dev/${qemuFlags.qemuSerialDevice}
+        exec < /dev/${qemuFlags.qemuSerialDevice} &> /dev/${qemuFlags.qemuSerialDevice}
 
         trap "systemctl poweroff" EXIT INT QUIT TERM
+
+        while ! ${netcat}/bin/nc -u -w0 ${vm_nameserver} 53 < /dev/null; do
+          echo "Waiting for connection (${vm_nameserver}:53/UDP)!"
+          sleep 1
+        done
 
         export PACKER_PLUGIN_PATH=${packer-builder-arm-image}/bin
         cd /mnt/${name}/build
@@ -102,6 +105,8 @@ let
     };
     environment.systemPackages = [ multipath-tools qemuArmStatic ];
     networking.hostName = name;
+    networking.nameservers = [ vm_nameserver ];
+    networking.resolvconf.enable = true;
     virtualisation.libvirtd.enable = true;
     virtualisation.memorySize = 2048;
     virtualisation.cores = 2;
@@ -110,7 +115,7 @@ let
     virtualisation.qemu.options = [
       "-nographic"
     ];
-    boot.binfmt.emulatedSystems = [ "armv6l-linux" ];
+    boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
   };
 
   buildVM = configuration:
@@ -129,7 +134,7 @@ let
         }
         {
           key = "run-in-machine";
-          nix.readOnlyStore = false;
+          boot.readOnlyNixStore = false;
           virtualisation.writableStore = false;
         }
       ];
@@ -148,11 +153,14 @@ in
 
       mkdir -p $PWD/mnt/overlay/boot
       touch $PWD/mnt/overlay/boot/ssh
+
+    '' + (optionalString (wifi_name != null) ''
       echo 'ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev' >>$PWD/mnt/overlay/boot/wpa_supplicant.conf
-      echo 'country=fi' >>$PWD/mnt/overlay/boot/wpa_supplicant.conf
+      echo 'country=${wifi_country}' >>$PWD/mnt/overlay/boot/wpa_supplicant.conf
       echo 'update_config=1' >>$PWD/mnt/overlay/boot/wpa_supplicant.conf
       wpa_passphrase "${wifi_name}" "${wifi_password}" | \
         sed -e 's/#.*$//' -e '/^$/d' >> $PWD/mnt/overlay/boot/wpa_supplicant.conf
+    '') + ''
 
       mkdir -p $PWD/mnt/overlay/home/pi/.ssh
       rm -f $PWD/mnt/overlay/home/pi/.ssh/authorized_keys

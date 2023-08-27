@@ -1,0 +1,42 @@
+- name: Create unifi directory
+  become: true
+  file:
+    path: "/var/lib/unifi"
+    owner: "1000"
+    group: "1000"
+    state: directory
+    mode: 0755
+
+- name: Start/Update unifi container
+  become: true
+  docker_container:
+    name: unifi-controller
+    image: "{{ unifi_image }}"
+    pull: true
+    restart_policy: always
+    env:
+      TZ: "{{ unifi_timezone }}"
+      PUID: "1000"
+      PGID: "1000"
+      MEM_LIMIT: "1024"
+      MEM_STARTUP: "1024"
+    network_mode: host
+    volumes:
+      - "/var/lib/unifi:/config"
+    container_default_behavior: compatibility
+
+- name: Check unifi container
+  uri:
+    url: https://localhost:8443
+    validate_certs: false
+  register: result
+  until: result.status == 200
+  retries: 15
+  delay: 10
+
+- name: Remove old image versions
+  become: true
+  docker_prune:
+    images: true
+    images_filters:
+      dangling: false

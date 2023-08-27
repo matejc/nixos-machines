@@ -1,0 +1,3 @@
+---
+unifi_image: "lscr.io/linuxserver/unifi-controller:arm64v8-7.4.162"
+unifi_timezone: "Europe/Helsinki"

@@ -46,9 +46,12 @@
 - name: Check pihole container
   uri:
     url: http://localhost
+    status_code:
+    - 200
+    - 403
   register: result
-  until: result.status == 200
-  retries: 5
+  until: result.status < 500
+  retries: 15
   delay: 10
 
 - name: Remove old image versions

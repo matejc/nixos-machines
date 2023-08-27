@@ -1,0 +1,7 @@
+---
+- hosts: net
+  roles:
+    - common
+    - docker
+    - unifi-controller
+    - pihole

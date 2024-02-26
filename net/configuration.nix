@@ -13,10 +13,15 @@ in {
   #   interfaces = [ vars.interface ];
   # };
 
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+
   nixpkgs.overlays = [
     (final: super: {
       makeModulesClosure = x:
         super.makeModulesClosure (x // { allowMissing = true; });
+      zfs = super.zfs.overrideAttrs(_: {
+         meta.platforms = [];
+      });
     })
   ];
 

@@ -25,6 +25,7 @@
     nixosConfigurations.net = nixpkgs.lib.nixosSystem {
       inherit system;
       modules = [
+        ./hardware-configuration.nix
         "${nixos-hardware}/raspberry-pi/4"
         "${upaas}/module.nix"
         ./configuration.nix

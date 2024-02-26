@@ -29,6 +29,7 @@
     env:
       TZ: "{{ pihole_timezone }}"
       ServerIP: "{{ ansible_host }}"
+      ServerIPv6: "{{ pihole_ipv6 }}"
       WEBPASSWORD: "{{ pihole_webpassword }}"
     dns_servers:
       - 127.0.0.1
@@ -45,12 +46,12 @@
 
 - name: Check pihole container
   uri:
-    url: http://localhost
+    url: http://127.0.0.1
     status_code:
     - 200
     - 403
   register: result
-  until: result.status < 500
+  until: (result.status < 500) and (result.status > 0)
   retries: 15
   delay: 10
 
@@ -60,3 +61,17 @@
     images: true
     images_filters:
       dangling: false
+
+- name: add static ip
+  lineinfile:
+    dest: /etc/dhcpcd.conf
+    regexp: "^.*static ip_address=.*$"
+    line: "static ip_address={{ ansible_host }}/24"
+  become: true
+
+- name: add static ipv6
+  lineinfile:
+    dest: /etc/dhcpcd.conf
+    regexp: "^.*static ip6_address=.*$"
+    line: "static ip6_address={{ pihole_ipv6 }}/64"
+  become: true

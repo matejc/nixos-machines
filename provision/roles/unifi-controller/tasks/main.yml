@@ -7,10 +7,22 @@
     state: directory
     mode: 0755
 
+- name: Start/Update mongodb container
+  become: true
+  docker_container:
+    name: mongodb
+    image: "{{ unifi_mongodb_image }}"
+    pull: true
+    restart_policy: always
+    network_mode: host
+    volumes:
+      - "/var/lib/unifi/data/db:/data/db"
+    container_default_behavior: compatibility
+
 - name: Start/Update unifi container
   become: true
   docker_container:
-    name: unifi-controller
+    name: unifi-network-application
     image: "{{ unifi_image }}"
     pull: true
     restart_policy: always
@@ -20,9 +32,13 @@
       PGID: "1000"
       MEM_LIMIT: "1024"
       MEM_STARTUP: "1024"
+      MONGO_USER: unifi
+      MONGO_HOST: 127.0.0.1
+      MONGO_PORT: "27017"
+      MONGO_DBNAME: unifi
     network_mode: host
     volumes:
-      - "/var/lib/unifi:/config"
+      - "/var/lib/unifi/data:/config"
     container_default_behavior: compatibility
 
 - name: Check unifi container

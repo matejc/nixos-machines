@@ -33,8 +33,6 @@
       sshUser = "matejc";
       user = "root";
       hostname = "100.98.35.20";
-      autoRollback = false;
-      magicRollback = false;
       profiles.system = {
         path = deploy-rs.lib.${system}.activate.nixos self.nixosConfigurations.ai1;
       };

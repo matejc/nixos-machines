@@ -1,6 +1,177 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, ... }:
 let
   vars = import ./vars.nix;
+  anything-llm-env = pkgs.writeText ".env" ''
+    SERVER_PORT=3001
+    STORAGE_DIR="/app/server/storage"
+    # UID='${toString config.users.users.llm.uid}'
+    # GID='${toString config.users.groups.llm.gid}'
+    JWT_SECRET="${vars.anything-llm.jwt_secret}" # Only needed if AUTH_TOKEN is set. Please generate random string at least 12 chars long.
+
+    ###########################################
+    ######## LLM API SElECTION ################
+    ###########################################
+    # LLM_PROVIDER='openai'
+    # OPEN_AI_KEY=
+    # OPEN_MODEL_PREF='gpt-3.5-turbo'
+
+    # LLM_PROVIDER='gemini'
+    # GEMINI_API_KEY=
+    # GEMINI_LLM_MODEL_PREF='gemini-pro'
+
+    # LLM_PROVIDER='azure'
+    # AZURE_OPENAI_ENDPOINT=
+    # AZURE_OPENAI_KEY=
+    # OPEN_MODEL_PREF='my-gpt35-deployment' # This is the "deployment" on Azure you want to use. Not the base model.
+    # EMBEDDING_MODEL_PREF='embedder-model' # This is the "deployment" on Azure you want to use for embeddings. Not the base model. Valid base model is text-embedding-ada-002
+
+    # LLM_PROVIDER='anthropic'
+    # ANTHROPIC_API_KEY=sk-ant-xxxx
+    # ANTHROPIC_MODEL_PREF='claude-2'
+
+    # LLM_PROVIDER='lmstudio'
+    # LMSTUDIO_BASE_PATH='http://your-server:1234/v1'
+    # LMSTUDIO_MODEL_TOKEN_LIMIT=4096
+
+    # LLM_PROVIDER='localai'
+    # LOCAL_AI_BASE_PATH='http://host.docker.internal:8080/v1'
+    # LOCAL_AI_MODEL_PREF='luna-ai-llama2'
+    # LOCAL_AI_MODEL_TOKEN_LIMIT=4096
+    # LOCAL_AI_API_KEY="sk-123abc"
+
+    LLM_PROVIDER='ollama'
+    OLLAMA_BASE_PATH='http://127.0.0.1:11434'
+    OLLAMA_MODEL_PREF='llama2:13b'
+    OLLAMA_MODEL_TOKEN_LIMIT=4096
+
+    # LLM_PROVIDER='togetherai'
+    # TOGETHER_AI_API_KEY='my-together-ai-key'
+    # TOGETHER_AI_MODEL_PREF='mistralai/Mixtral-8x7B-Instruct-v0.1'
+
+    # LLM_PROVIDER='mistral'
+    # MISTRAL_API_KEY='example-mistral-ai-api-key'
+    # MISTRAL_MODEL_PREF='mistral-tiny'
+
+    # LLM_PROVIDER='perplexity'
+    # PERPLEXITY_API_KEY='my-perplexity-key'
+    # PERPLEXITY_MODEL_PREF='codellama-34b-instruct'
+
+    # LLM_PROVIDER='openrouter'
+    # OPENROUTER_API_KEY='my-openrouter-key'
+    # OPENROUTER_MODEL_PREF='openrouter/auto'
+
+    # LLM_PROVIDER='huggingface'
+    # HUGGING_FACE_LLM_ENDPOINT=https://uuid-here.us-east-1.aws.endpoints.huggingface.cloud
+    # HUGGING_FACE_LLM_API_KEY=hf_xxxxxx
+    # HUGGING_FACE_LLM_TOKEN_LIMIT=8000
+
+    # LLM_PROVIDER='groq'
+    # GROQ_API_KEY=gsk_abcxyz
+    # GROQ_MODEL_PREF=llama2-70b-4096
+
+    ###########################################
+    ######## Embedding API SElECTION ##########
+    ###########################################
+    # Only used if you are using an LLM that does not natively support embedding (openai or Azure)
+    # EMBEDDING_ENGINE='openai'
+    # OPEN_AI_KEY=sk-xxxx
+    # EMBEDDING_MODEL_PREF='text-embedding-ada-002'
+
+    # EMBEDDING_ENGINE='azure'
+    # AZURE_OPENAI_ENDPOINT=
+    # AZURE_OPENAI_KEY=
+    # EMBEDDING_MODEL_PREF='my-embedder-model' # This is the "deployment" on Azure you want to use for embeddings. Not the base model. Valid base model is text-embedding-ada-002
+
+    # EMBEDDING_ENGINE='localai'
+    # EMBEDDING_BASE_PATH='http://localhost:8080/v1'
+    # EMBEDDING_MODEL_PREF='text-embedding-ada-002'
+    # EMBEDDING_MODEL_MAX_CHUNK_LENGTH=1000 # The max chunk size in chars a string to embed can be
+
+    # EMBEDDING_ENGINE='ollama'
+    # EMBEDDING_BASE_PATH='http://127.0.0.1:11434'
+    # EMBEDDING_MODEL_PREF='nomic-embed-text:latest'
+    # EMBEDDING_MODEL_MAX_CHUNK_LENGTH=8192
+
+    ###########################################
+    ######## Vector Database Selection ########
+    ###########################################
+    # Enable all below if you are using vector database: Chroma.
+    # VECTOR_DB="chroma"
+    # CHROMA_ENDPOINT='http://host.docker.internal:8000'
+    # CHROMA_API_HEADER="X-Api-Key"
+    # CHROMA_API_KEY="sk-123abc"
+
+    # Enable all below if you are using vector database: Pinecone.
+    # VECTOR_DB="pinecone"
+    # PINECONE_API_KEY=
+    # PINECONE_INDEX=
+
+    # Enable all below if you are using vector database: LanceDB.
+    VECTOR_DB="lancedb"
+
+    # Enable all below if you are using vector database: Weaviate.
+    # VECTOR_DB="weaviate"
+    # WEAVIATE_ENDPOINT="http://localhost:8080"
+    # WEAVIATE_API_KEY=
+
+    # Enable all below if you are using vector database: Qdrant.
+    # VECTOR_DB="qdrant"
+    # QDRANT_ENDPOINT="http://localhost:6333"
+    # QDRANT_API_KEY=
+
+    # Enable all below if you are using vector database: Milvus.
+    # VECTOR_DB="milvus"
+    # MILVUS_ADDRESS="http://localhost:19530"
+    # MILVUS_USERNAME=
+    # MILVUS_PASSWORD=
+
+    # Enable all below if you are using vector database: Zilliz Cloud.
+    # VECTOR_DB="zilliz"
+    # ZILLIZ_ENDPOINT="https://sample.api.gcp-us-west1.zillizcloud.com"
+    # ZILLIZ_API_TOKEN=api-token-here
+
+    # Enable all below if you are using vector database: Astra DB.
+    # VECTOR_DB="astra"
+    # ASTRA_DB_APPLICATION_TOKEN=
+    # ASTRA_DB_ENDPOINT=
+
+    ###########################################
+    ######## Audio Model Selection ############
+    ###########################################
+    # (default) use built-in whisper-small model.
+    WHISPER_PROVIDER="local"
+
+    # use openai hosted whisper model.
+    # WHISPER_PROVIDER="openai"
+    # OPEN_AI_KEY=sk-xxxxxxxx
+
+    # CLOUD DEPLOYMENT VARIRABLES ONLY
+    AUTH_TOKEN="${vars.anything-llm.auth_token}" # This is the password to your application if remote hosting.
+    DISABLE_TELEMETRY="true"
+
+    ###########################################
+    ######## PASSWORD COMPLEXITY ##############
+    ###########################################
+    # Enforce a password schema for your organization users.
+    # Documentation on how to use https://github.com/kamronbatman/joi-password-complexity
+    # Default is only 8 char minimum
+    # PASSWORDMINCHAR=8
+    # PASSWORDMAXCHAR=250
+    # PASSWORDLOWERCASE=1
+    # PASSWORDUPPERCASE=1
+    # PASSWORDNUMERIC=1
+    # PASSWORDSYMBOL=1
+    # PASSWORDREQUIREMENTS=4
+
+    ###########################################
+    ######## ENABLE HTTPS SERVER ##############
+    ###########################################
+    # By enabling this and providing the path/filename for the key and cert,
+    # the server will use HTTPS instead of HTTP.
+    #ENABLE_HTTPS="true"
+    #HTTPS_CERT_PATH="sslcert/cert.pem"
+    #HTTPS_KEY_PATH="sslcert/key.pem"
+  '';
 in {
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
@@ -15,7 +186,7 @@ in {
   ];
 
   environment.systemPackages = with pkgs; [
-    nano curl iproute2 htop tmux pciutils
+    nano curl iproute2 htop tmux pciutils ncdu
     config.hardware.nvidia.package
   ];
 
@@ -33,7 +204,7 @@ in {
   security.sudo.wheelNeedsPassword = false;
   nix.settings.trusted-users = [ "@wheel" ];
 
-  hardware.enableRedistributableFirmware = true;
+  # hardware.enableRedistributableFirmware = true;
 
   networking.firewall = {
     allowedTCPPorts = [
@@ -41,10 +212,10 @@ in {
     ];
   };
 
-  networking.nameservers = vars.nameservers;
+  # networking.nameservers = vars.nameservers;
   networking.hostName = vars.hostname;
 
-  systemd.enableUnifiedCgroupHierarchy = false;
+  # systemd.enableUnifiedCgroupHierarchy = false;
 
   services.tailscale.enable = true;
 
@@ -58,9 +229,10 @@ in {
     nvidiaPersistenced = true;
     datacenter.enable = true;
   };
+  systemd.services.nvidia-fabricmanager.serviceConfig.SuccessExitStatus = "0 1";
 
-  boot.initrd.kernelModules = [ "nvidia" ];
-  boot.extraModulePackages = [ config.hardware.nvidia.package ];
+  # boot.initrd.kernelModules = [ "nvidia" ];
+  # boot.extraModulePackages = [ config.hardware.nvidia.package ];
 
   virtualisation.docker = {
     enable = true;
@@ -133,17 +305,44 @@ in {
             #     capabilities = ["gpu"];
             #   }];
             # };
-            services.openwebui = {
-              image = "ghcr.io/open-webui/open-webui:main";
-              environment = {
-                OLLAMA_BASE_URL = "http://127.0.0.1:11434";
+            # services.openwebui = {
+            #   image = "ghcr.io/open-webui/open-webui:main";
+            #   environment = {
+            #     OLLAMA_BASE_URL = "http://127.0.0.1:11434";
+            #   };
+            #   volumes = [
+            #     "/var/lib/llm/open-webui:/app/backend/data"
+            #   ];
+            #   # links = [ "vllm" ];
+            #   # ports = [ "3000:8080" ];
+            #   network_mode = "host";
+            # };
+            services.anything-llm = let
+              src = pkgs.fetchgit {
+                url = "https://github.com/Mintplex-Labs/anything-llm";
+                rev = "129c456f782df878cd55f4563dd117e6c6040dfa";
+                sha256 = "sha256-wEWWZCLs3HnimldoqUvkvDOh5YJB2u2zSU46RtXIu48=";
               };
+            in {
+              image = "mintplexlabs/anythingllm:latest";
+              # build = {
+              #   context = "${src}";
+              #   dockerfile = "${src}/docker/Dockerfile";
+              #   args = {
+              #     ARG_UID = "${toString config.users.users.llm.uid}";
+              #     ARG_GUI = "${toString config.users.groups.llm.gid}";
+              #   };
+              # };
               volumes = [
-                "/var/lib/llm/open-webui:/app/backend/data"
+                "${anything-llm-env}:/app/server/.env"
+                "/var/lib/llm/server-storage:/app/server/storage"
+                "/var/lib/llm/collector-hotdir:/app/collector/hotdir"
+                "/var/lib/llm/collector-outputs:/app/collector/outputs"
               ];
-              # links = [ "vllm" ];
-              # ports = [ "3000:8080" ];
+              env_file = [ "${anything-llm-env}" ];
+              # user = "${toString config.users.users.llm.uid}:${toString config.users.groups.llm.gid}";
               network_mode = "host";
+              cap_add = [ "SYS_ADMIN" ];
             };
           };
         };
@@ -156,8 +355,9 @@ in {
     createHome = true;
     home = "/var/lib/llm";
     extraGroups = [ "docker" ];
+    uid = 1005;
   };
-  users.groups.llm = {};
+  users.groups.llm.gid = 1005;
 
   nixpkgs.config.allowUnfree = true;
   nixpkgs.config.nvidia.acceptLicense = true;

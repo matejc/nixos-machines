@@ -87,10 +87,10 @@ let
     # EMBEDDING_MODEL_PREF='text-embedding-ada-002'
     # EMBEDDING_MODEL_MAX_CHUNK_LENGTH=1000 # The max chunk size in chars a string to embed can be
 
-    # EMBEDDING_ENGINE='ollama'
-    # EMBEDDING_BASE_PATH='http://127.0.0.1:11434'
-    # EMBEDDING_MODEL_PREF='nomic-embed-text:latest'
-    # EMBEDDING_MODEL_MAX_CHUNK_LENGTH=8192
+    EMBEDDING_ENGINE='ollama'
+    EMBEDDING_BASE_PATH='http://127.0.0.1:11434'
+    EMBEDDING_MODEL_PREF='nomic-embed-text:latest'
+    EMBEDDING_MODEL_MAX_CHUNK_LENGTH=8192
 
     ###########################################
     ######## Vector Database Selection ########
@@ -317,30 +317,15 @@ in {
             #   # ports = [ "3000:8080" ];
             #   network_mode = "host";
             # };
-            services.anything-llm = let
-              src = pkgs.fetchgit {
-                url = "https://github.com/Mintplex-Labs/anything-llm";
-                rev = "129c456f782df878cd55f4563dd117e6c6040dfa";
-                sha256 = "sha256-wEWWZCLs3HnimldoqUvkvDOh5YJB2u2zSU46RtXIu48=";
-              };
-            in {
+            services.anything-llm = {
               image = "mintplexlabs/anythingllm:latest";
-              # build = {
-              #   context = "${src}";
-              #   dockerfile = "${src}/docker/Dockerfile";
-              #   args = {
-              #     ARG_UID = "${toString config.users.users.llm.uid}";
-              #     ARG_GUI = "${toString config.users.groups.llm.gid}";
-              #   };
-              # };
               volumes = [
-                "${anything-llm-env}:/app/server/.env"
-                "/var/lib/llm/server-storage:/app/server/storage"
-                "/var/lib/llm/collector-hotdir:/app/collector/hotdir"
-                "/var/lib/llm/collector-outputs:/app/collector/outputs"
+                "/var/lib/llm/server/.env:/app/server/.env"
+                "/var/lib/llm/server/storage:/app/server/storage"
+                "/var/lib/llm/collector/hotdir:/app/collector/hotdir"
+                "/var/lib/llm/collector/outputs:/app/collector/outputs"
               ];
-              env_file = [ "${anything-llm-env}" ];
-              # user = "${toString config.users.users.llm.uid}:${toString config.users.groups.llm.gid}";
+              env_file = [ "/var/lib/llm/server/.env" ];
               network_mode = "host";
               cap_add = [ "SYS_ADMIN" ];
             };
@@ -349,6 +334,17 @@ in {
       };
     };
   };
+
+  system.activationScripts.llm.text = ''
+    mkdir -p /var/lib/llm/server/storage
+    mkdir -p /var/lib/llm/collector/hotdir
+    mkdir -p /var/lib/llm/collector/outputs
+    if [ ! -f /var/lib/llm/server/.env ]
+    then
+      cat ${anything-llm-env} > /var/lib/llm/server/.env
+    fi
+    chown -R 1000:1000 /var/lib/llm/{server,collector}
+  '';
 
   users.users.llm = {
     isNormalUser = true;

@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:matejc/nixpkgs/mylocal281";
+    nixpkgs.url = "github:matejc/nixpkgs/mylocal283";
     nixos-generators = {
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -32,7 +32,7 @@
     deploy.nodes.ai1 = {
       sshUser = "matejc";
       user = "root";
-      hostname = "100.98.35.20";
+      hostname = "100.102.119.106";
       profiles.system = {
         path = deploy-rs.lib.${system}.activate.nixos self.nixosConfigurations.ai1;
       };

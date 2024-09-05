@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:matejc/nixpkgs/mylocal283";
+    nixpkgs.url = "github:matejc/nixpkgs/mylocal290";
     nixos-generators = {
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";

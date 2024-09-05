@@ -25,7 +25,7 @@ in {
     })
   ];
 
-  environment.systemPackages = with pkgs; [ nano curl iproute2 ];
+  environment.systemPackages = with pkgs; [ nano curl iproute2 htop ];
 
   services.openssh.enable = true;
 
@@ -79,9 +79,8 @@ in {
           user = "pihole";
           directory = "/var/lib/pihole";
           compose = {
-            version = "3";
             services.pihole = {
-              image = "pihole/pihole:2024.02.0";
+              image = "pihole/pihole:2024.07.0";
               environment = {
                 TZ = "Europe/Helsinki";
                 WEBPASSWORD = vars.pihole_webpassword;
@@ -89,6 +88,7 @@ in {
               volumes = [
                 "/var/lib/pihole/pihole:/etc/pihole"
                 "/var/lib/pihole/dnsmasq.d:/etc/dnsmasq.d"
+                "/var/lib/pihole/log:/var/log/pihole"
               ];
               network_mode = "host";
             };
@@ -100,9 +100,8 @@ in {
           user = "unifi";
           directory = "/var/lib/unifi";
           compose = {
-            version = "3";
             services.unifi = {
-              image = "lscr.io/linuxserver/unifi-network-application:latest";
+              image = "lscr.io/linuxserver/unifi-network-application:8.3.32-ls56";
               environment = {
                 TZ = "Europe/Helsinki";
                 PUID = "${toString config.users.users.unifi.uid}";
@@ -137,16 +136,18 @@ in {
     createHome = true;
     home = "/var/lib/pihole";
     extraGroups = [ "docker" ];
+    group = "pihole";
   };
   users.groups.pihole = {};
 
   users.users.unifi = {
-    isNormalUser = true;
     createHome = true;
     home = "/var/lib/unifi";
     extraGroups = [ "docker" ];
+    uid = 911;
+    group = "unifi";
   };
-  users.groups.unifi = {};
+  users.groups.unifi.gid = 911;
 
   nixpkgs.config.allowUnfree = true;
 

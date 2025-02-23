@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:matejc/nixpkgs/mylocal302";
+    nixpkgs.url = "github:matejc/nixpkgs/latest";
     nixos-generators = {
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -18,18 +18,19 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-  outputs = { self, nixpkgs, nixos-generators, nixos-hardware, upaas, deploy-rs, ... }: let
-    pkgs = import nixpkgs { system = "x86_64-linux"; };
+  outputs = { self, ... }@inputs: let
+    pkgs = import inputs.nixpkgs { system = "x86_64-linux"; };
     system = "aarch64-linux";
   in {
-    nixosConfigurations.net = nixpkgs.lib.nixosSystem {
+    nixosConfigurations.net = inputs.nixpkgs.lib.nixosSystem {
       inherit system;
       modules = [
         ./hardware-configuration.nix
-        "${nixos-hardware}/raspberry-pi/4"
-        "${upaas}/module.nix"
+        "${inputs.nixos-hardware}/raspberry-pi/4"
+        "${inputs.upaas}/module.nix"
         ./configuration.nix
       ];
+      specialArgs.inputs = inputs;
     };
 
     deploy-rs = pkgs.deploy-rs.out;
@@ -39,32 +40,33 @@
       hostname = "192.168.88.128";
       fastConnection = true;
       profiles.system = {
-        path = deploy-rs.lib.${system}.activate.nixos self.nixosConfigurations.net;
+        path = inputs.deploy-rs.lib.${system}.activate.nixos self.nixosConfigurations.net;
       };
     };
-    checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
+    checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) inputs.deploy-rs.lib;
 
     packages.${system} = {
-      image = nixos-generators.nixosGenerate {
+      image = inputs.nixos-generators.nixosGenerate {
         inherit system;
         modules = [
-          "${nixos-hardware}/raspberry-pi/4"
-          "${upaas}/module.nix"
+          "${inputs.nixos-hardware}/raspberry-pi/4"
+          "${inputs.upaas}/module.nix"
           ./configuration.nix
         ];
         format = "sd-aarch64";
+        specialArgs.inputs = inputs;
       };
     };
-    packages.x86_64-linux = {
-      test = nixos-generators.nixosGenerate {
-        system = "x86_64-linux";
-        modules = [
-          "${upaas}/module.nix"
-          ./configuration.nix
-        ];
-        format = "vm";
-        specialArgs.diskSize = "5000";
-      };
-    };
+    # packages.x86_64-linux = {
+    #   test = nixos-generators.nixosGenerate {
+    #     system = "x86_64-linux";
+    #     modules = [
+    #       "${upaas}/module.nix"
+    #       ./configuration.nix
+    #     ];
+    #     format = "vm";
+    #     specialArgs.diskSize = "5000";
+    #   };
+    # };
   };
 }

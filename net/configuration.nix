@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, inputs, ... }:
 let
   vars = import ./vars.nix;
 
@@ -39,13 +39,25 @@ in {
     };
   };
   security.sudo.wheelNeedsPassword = false;
-  nix.settings.trusted-users = [ "@wheel" ];
+
+  nix = {
+    channel.enable = false;
+    settings = {
+      nix-path = "nixpkgs=${inputs.nixpkgs}";
+      experimental-features = [ "nix-command" "flakes" ];
+      trusted-users = [ "@wheel" ];
+    };
+    gc = {
+      automatic = true;
+      dates = "daily";
+    };
+  };
 
   hardware.enableRedistributableFirmware = true;
 
   networking.firewall = {
     allowedTCPPorts = [
-      80 53
+      443 53
       8080  # Port for UAP to inform controller.
       8880  # Port for HTTP portal redirect, if guest portal is enabled.
       8843  # Port for HTTPS portal redirect, ditto.
@@ -80,10 +92,10 @@ in {
           directory = "/var/lib/pihole";
           compose = {
             services.pihole = {
-              image = "pihole/pihole:2024.07.0";
+              image = "pihole/pihole:2025.02.3";
               environment = {
                 TZ = "Europe/Helsinki";
-                WEBPASSWORD = vars.pihole_webpassword;
+                FTLCONF_webserver_api_password = vars.pihole_webpassword;
               };
               volumes = [
                 "/var/lib/pihole/pihole:/etc/pihole"
@@ -101,7 +113,7 @@ in {
           directory = "/var/lib/unifi";
           compose = {
             services.unifi = {
-              image = "lscr.io/linuxserver/unifi-network-application:8.3.32-ls56";
+              image = "lscr.io/linuxserver/unifi-network-application:9.0.108-ls76";
               environment = {
                 TZ = "Europe/Helsinki";
                 PUID = "${toString config.users.users.unifi.uid}";
@@ -113,14 +125,14 @@ in {
                 MONGO_DBNAME = "unifi";
               };
               volumes = [
-                "/var/lib/unifi/config:/config"
+                "/var/lib/unifi/config_4:/config"
               ];
               network_mode = "host";
             };
             services.mongo = {
               image = "mongo:4.4.18";
               volumes = [
-                "/var/lib/unifi/db:/data/db"
+                "/var/lib/unifi/db_4:/data/db"
                 "${init-mongo-js}:/docker-entrypoint-initdb.d/init-mongo.js:ro"
               ];
               network_mode = "host";
@@ -148,6 +160,120 @@ in {
     group = "unifi";
   };
   users.groups.unifi.gid = 911;
+
+  system.activationScripts.grafana-agent-read-pihole.text = ''
+    chmod o+rx /var/lib/pihole
+    chmod o+rx /var/lib/pihole/log
+    chmod o+r /var/lib/pihole/log/pihole.log
+  '';
+
+/*
+  systemd.services."prometheus-pihole-exporter" = {
+    wantedBy = [ "multi-user.target" ];
+    after = [ "network.target" ];
+    serviceConfig.Restart = "always";
+    serviceConfig.PrivateTmp = true;
+    serviceConfig.WorkingDirectory = /tmp;
+    serviceConfig.DynamicUser = true;
+    serviceConfig.User = "pihole-exporter";
+    serviceConfig.Group = "pihole-exporter";
+    # Hardening
+    serviceConfig.CapabilityBoundingSet = [ "" ];
+    serviceConfig.DeviceAllow = [ "" ];
+    serviceConfig.LockPersonality = true;
+    serviceConfig.MemoryDenyWriteExecute = true;
+    serviceConfig.NoNewPrivileges = true;
+    serviceConfig.PrivateDevices = true;
+    serviceConfig.ProtectClock = true;
+    serviceConfig.ProtectControlGroups = true;
+    serviceConfig.ProtectHome = true;
+    serviceConfig.ProtectHostname = true;
+    serviceConfig.ProtectKernelLogs = true;
+    serviceConfig.ProtectKernelModules = true;
+    serviceConfig.ProtectKernelTunables = true;
+    serviceConfig.ProtectSystem = "strict";
+    serviceConfig.RemoveIPC = true;
+    serviceConfig.RestrictAddressFamilies = [ "AF_INET" "AF_INET6" ];
+    serviceConfig.RestrictNamespaces = true;
+    serviceConfig.RestrictRealtime = true;
+    serviceConfig.RestrictSUIDSGID = true;
+    serviceConfig.SystemCallArchitectures = "native";
+    serviceConfig.UMask = "0077";
+    serviceConfig.ExecStart = ''
+      ${pkgs.prometheus-pihole-exporter}/bin/pihole-exporter \
+        -pihole_password "${vars.pihole_webpassword}" \
+        -pihole_hostname 127.0.0.1 \
+        -pihole_port 80 \
+        -pihole_protocol http \
+        -port 9617 \
+        -timeout 5s
+    '';
+  };
+*/
+  services.grafana-agent.enable = true;
+  services.grafana-agent.settings = {
+/*
+    metrics = {
+      configs = [{
+        name = "default";
+        scrape_configs = [{
+          job_name = "pihole";
+          static_configs = [{
+            targets = [ "localhost:9617" ];
+            labels = {
+              service = "pihole-exporter";
+              node = "net";
+            };
+          }];
+        }];
+      }];
+      global = {
+        remote_write = [{
+          url = vars.prometheus_push_url;
+        }];
+      };
+      wal_directory = "/tmp/wal";
+    };
+*/
+    logs = {
+      configs = [{
+        clients = [{
+          url = vars.loki_push_url;
+        }];
+        name = "pihole";
+        scrape_configs = [{
+          job_name = "pihole_log";
+          static_configs = [{
+            targets = [ "localhost" ];
+            labels = {
+              instance = config.networking.hostName;
+              job = "pihole_log";
+              __path__ = "/var/lib/pihole/log/pihole.log";
+            };
+          }];
+          pipeline_stages = [{ match = {
+            selector = ''{job="pihole_log"}'';
+            stages = [{
+              regex.expression = "^(?P<time>[A-Za-z]{3} [0-9]{2} [0-9:]{8}) (?P<content>.*)$";
+            } {
+              timestamp = {
+                source = "time";
+                format = "Jan 2 15:04:05";
+                location = "Europe/Helsinki";
+              };
+            } {
+              output.source = "content";
+            }];
+          };}];
+        }];
+        positions.filename = "/tmp/positions.yaml";
+      }];
+    };
+
+    server = {
+      log_level = "info";
+    };
+  };
 
   nixpkgs.config.allowUnfree = true;
 

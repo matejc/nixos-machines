@@ -25,7 +25,7 @@ in {
     })
   ];
 
-  environment.systemPackages = with pkgs; [ nano curl iproute2 htop ];
+  environment.systemPackages = with pkgs; [ nano curl iproute2 htop ncdu ];
 
   services.openssh.enable = true;
 
@@ -92,10 +92,11 @@ in {
           directory = "/var/lib/pihole";
           compose = {
             services.pihole = {
-              image = "pihole/pihole:2025.02.3";
+              image = "pihole/pihole:2025.08.0";
               environment = {
                 TZ = "Europe/Helsinki";
                 FTLCONF_webserver_api_password = vars.pihole_webpassword;
+                FTLCONF_webserver_port = "443s";
               };
               volumes = [
                 "/var/lib/pihole/pihole:/etc/pihole"
@@ -113,7 +114,7 @@ in {
           directory = "/var/lib/unifi";
           compose = {
             services.unifi = {
-              image = "lscr.io/linuxserver/unifi-network-application:9.0.108-ls76";
+              image = "lscr.io/linuxserver/unifi-network-application:9.3.45-ls100";
               environment = {
                 TZ = "Europe/Helsinki";
                 PUID = "${toString config.users.users.unifi.uid}";
@@ -161,11 +162,13 @@ in {
   };
   users.groups.unifi.gid = 911;
 
+/*
   system.activationScripts.grafana-agent-read-pihole.text = ''
     chmod o+rx /var/lib/pihole
     chmod o+rx /var/lib/pihole/log
-    chmod o+r /var/lib/pihole/log/pihole.log
+    chmod o+r /var/lib/pihole/log/pihole.log*
   '';
+*/
 
 /*
   systemd.services."prometheus-pihole-exporter" = {
@@ -210,8 +213,10 @@ in {
     '';
   };
 */
+/*
   services.grafana-agent.enable = true;
   services.grafana-agent.settings = {
+*/
 /*
     metrics = {
       configs = [{
@@ -235,6 +240,7 @@ in {
       wal_directory = "/tmp/wal";
     };
 */
+/*
     logs = {
       configs = [{
         clients = [{
@@ -248,13 +254,14 @@ in {
             labels = {
               instance = config.networking.hostName;
               job = "pihole_log";
-              __path__ = "/var/lib/pihole/log/pihole.log";
+              __path__ = "/var/lib/pihole/log/pihole.log*";
+              __path_exclude__ = "/var/lib/pihole/log/pihole.log*gz";
             };
           }];
           pipeline_stages = [{ match = {
             selector = ''{job="pihole_log"}'';
             stages = [{
-              regex.expression = "^(?P<time>[A-Za-z]{3} [0-9]{2} [0-9:]{8}) (?P<content>.*)$";
+              regex.expression = "^(?P<time>[A-Za-z]{3}[\ ]{1,2}[0-9]{1,2} [0-9:]{8}) (?P<content>.*)$";
             } {
               timestamp = {
                 source = "time";
@@ -274,7 +281,7 @@ in {
       log_level = "info";
     };
   };
-
+*/
   nixpkgs.config.allowUnfree = true;
 
   system.stateVersion = "23.11";

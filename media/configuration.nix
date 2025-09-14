@@ -3,7 +3,11 @@ let
   vars = import ./vars.nix { inherit pkgs; };
 
 in {
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  # boot.kernelPackages = pkgs.linuxPackages_latest;
+
+  imports = [
+    inputs.nixos-hardware.nixosModules.raspberry-pi-4
+  ];
 
   nixpkgs.overlays = [
     (final: super: {
@@ -14,6 +18,9 @@ in {
       });
     })
   ];
+
+  hardware.raspberry-pi."4".fkms-3d.enable = true;
+  hardware.raspberry-pi."4".apply-overlays-dtmerge.enable = true;
 
   environment.systemPackages = with pkgs; [
     nano curl iproute2 htop ncdu tmux jq
@@ -32,6 +39,7 @@ in {
     users.jellyfin = {
       home = "/mnt/storage/jellyfin-home";
       createHome = true;
+      extraGroups = [ "video" ];
     };
   };
   security.sudo.wheelNeedsPassword = false;
@@ -69,8 +77,8 @@ in {
     };
   };
   systemd.services."fetch_script" = {
-    script = "/run/current-system/sw/bin/fetch_script";
     serviceConfig = {
+      ExecStart = "/run/current-system/sw/bin/fetch_script";
       Type = "oneshot";
       User = "jellyfin";
     };

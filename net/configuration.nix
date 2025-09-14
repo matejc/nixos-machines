@@ -97,6 +97,7 @@ in {
                 TZ = "Europe/Helsinki";
                 FTLCONF_webserver_api_password = vars.pihole_webpassword;
                 FTLCONF_webserver_port = "443s";
+                FTLCONF_dns_upstreams = lib.strings.concatStringsSep ";" vars.nameservers;
               };
               volumes = [
                 "/var/lib/pihole/pihole:/etc/pihole"

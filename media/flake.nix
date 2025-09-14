@@ -6,7 +6,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixos-hardware = {
-      url = "github:NixOS/nixos-hardware/master";
+      url = "github:NixOS/nixos-hardware";
     };
     upaas = {
       url = "github:matejc/upaas/master";
@@ -24,9 +24,8 @@
     nixosConfigurations.media = inputs.nixpkgs.lib.nixosSystem {
       inherit system;
       modules = [
-        ./hardware-configuration.nix
-        "${inputs.nixos-hardware}/raspberry-pi/4"
         "${inputs.upaas}/module.nix"
+        ./hardware-configuration.nix
         ./configuration.nix
       ];
       specialArgs.inputs = inputs;
@@ -55,17 +54,17 @@
         specialArgs.inputs = inputs;
       };
     };
-    packages.x86_64-linux = {
-      test = inputs.nixos-generators.nixosGenerate {
-        system = "x86_64-linux";
-        modules = [
-          "${inputs.upaas}/module.nix"
-          ./configuration.nix
-        ];
-        format = "vm";
-        specialArgs.diskSize = "5000";
-        specialArgs.inputs = inputs;
-      };
-    };
+    # packages.x86_64-linux = {
+    #   test = inputs.nixos-generators.nixosGenerate {
+    #     system = "x86_64-linux";
+    #     modules = [
+    #       "${inputs.upaas}/module.nix"
+    #       ./configuration.nix
+    #     ];
+    #     format = "vm";
+    #     specialArgs.diskSize = "5000";
+    #     specialArgs.inputs = inputs;
+    #   };
+    # };
   };
 }

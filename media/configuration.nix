@@ -1,8 +1,13 @@
-{ config, pkgs, lib, inputs, ... }:
+{
+  pkgs,
+  inputs,
+  ...
+}:
 let
   vars = import ./vars.nix { inherit pkgs; };
 
-in {
+in
+{
   # boot.kernelPackages = pkgs.linuxPackages_latest;
 
   imports = [
@@ -11,10 +16,9 @@ in {
 
   nixpkgs.overlays = [
     (final: super: {
-      makeModulesClosure = x:
-        super.makeModulesClosure (x // { allowMissing = true; });
-      zfs = super.zfs.overrideAttrs(_: {
-         meta.platforms = [];
+      makeModulesClosure = x: super.makeModulesClosure (x // { allowMissing = true; });
+      zfs = super.zfs.overrideAttrs (_: {
+        meta.platforms = [ ];
       });
     })
   ];
@@ -22,9 +26,18 @@ in {
   hardware.raspberry-pi."4".fkms-3d.enable = true;
   hardware.raspberry-pi."4".apply-overlays-dtmerge.enable = true;
 
-  environment.systemPackages = with pkgs; [
-    nano curl iproute2 htop ncdu tmux jq
-  ] ++ vars.packages;
+  environment.systemPackages =
+    with pkgs;
+    [
+      nano
+      curl
+      iproute2
+      htop
+      ncdu
+      tmux
+      jq
+    ]
+    ++ vars.packages;
 
   services.openssh.enable = true;
 
@@ -48,7 +61,10 @@ in {
     channel.enable = false;
     settings = {
       nix-path = "nixpkgs=${inputs.nixpkgs}";
-      experimental-features = [ "nix-command" "flakes" ];
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
       trusted-users = [ "@wheel" ];
     };
     gc = {
@@ -98,7 +114,10 @@ in {
     };
   };
 
-  networking.firewall.allowedTCPPorts = [ 80 443 ];
+  networking.firewall.allowedTCPPorts = [
+    80
+    443
+  ];
 
   services.tailscale.enable = true;
 

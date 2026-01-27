@@ -92,7 +92,7 @@ in {
           directory = "/var/lib/pihole";
           compose = {
             services.pihole = {
-              image = "pihole/pihole:2025.08.0";
+              image = "pihole/pihole:2025.11.0";
               environment = {
                 TZ = "Europe/Helsinki";
                 FTLCONF_webserver_api_password = vars.pihole_webpassword;
@@ -115,7 +115,7 @@ in {
           directory = "/var/lib/unifi";
           compose = {
             services.unifi = {
-              image = "lscr.io/linuxserver/unifi-network-application:9.3.45-ls100";
+              image = "lscr.io/linuxserver/unifi-network-application:9.5.21";
               environment = {
                 TZ = "Europe/Helsinki";
                 PUID = "${toString config.users.users.unifi.uid}";

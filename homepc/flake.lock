@@ -38,57 +38,6 @@
         "type": "github"
       }
     },
-    "nixlib": {
-      "locked": {
-        "lastModified": 1736643958,
-        "narHash": "sha256-tmpqTSWVRJVhpvfSN9KXBvKEXplrwKnSZNAoNPf/S/s=",
-        "owner": "nix-community",
-        "repo": "nixpkgs.lib",
-        "rev": "1418bc28a52126761c02dd3d89b2d8ca0f521181",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-community",
-        "repo": "nixpkgs.lib",
-        "type": "github"
-      }
-    },
-    "nixos-generators": {
-      "inputs": {
-        "nixlib": "nixlib",
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1764234087,
-        "narHash": "sha256-NHF7QWa0ZPT8hsJrvijREW3+nifmF2rTXgS2v0tpcEA=",
-        "owner": "nix-community",
-        "repo": "nixos-generators",
-        "rev": "032a1878682fafe829edfcf5fdfad635a2efe748",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-community",
-        "repo": "nixos-generators",
-        "type": "github"
-      }
-    },
-    "nixos-hardware": {
-      "locked": {
-        "lastModified": 1768584846,
-        "narHash": "sha256-IRPmIOV2tPwxbhP/I9M5AmwhTC0lMPtoPStC+8T6xl0=",
-        "owner": "NixOS",
-        "repo": "nixos-hardware",
-        "rev": "cce68f4a54fa4e3d633358364477f5cc1d782440",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "repo": "nixos-hardware",
-        "type": "github"
-      }
-    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1768664748,
@@ -105,13 +54,28 @@
         "type": "github"
       }
     },
+    "parental-watchdog": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1769456075,
+        "narHash": "sha256-mQwki5Q0rViClBtyvgnWphZUO8mhq5Cmbtt0ksmLEUY=",
+        "owner": "matejc",
+        "repo": "parental-watchdog",
+        "rev": "a0f2e229664f70d084dc480dcf88226b77611925",
+        "type": "github"
+      },
+      "original": {
+        "owner": "matejc",
+        "ref": "v0.1.1",
+        "repo": "parental-watchdog",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "deploy-rs": "deploy-rs",
-        "nixos-generators": "nixos-generators",
-        "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs",
-        "upaas": "upaas"
+        "parental-watchdog": "parental-watchdog"
       }
     },
     "systems": {
@@ -126,23 +90,6 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
-        "type": "github"
-      }
-    },
-    "upaas": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1712610717,
-        "narHash": "sha256-w8qQb6izEQsVRqt9m2Je97BvDA5flfs8QFqzeLPyTQs=",
-        "owner": "matejc",
-        "repo": "upaas",
-        "rev": "7648bc2b53bc4472f51db456676375d008b98655",
-        "type": "github"
-      },
-      "original": {
-        "owner": "matejc",
-        "ref": "master",
-        "repo": "upaas",
         "type": "github"
       }
     },

@@ -6,7 +6,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     parental-watchdog = {
-      url = "github:matejc/parental-watchdog/v0.1.1";
+      url = "github:matejc/parental-watchdog/v0.2.0";
       flake = false;
     };
   };

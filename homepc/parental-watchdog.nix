@@ -1,6 +1,5 @@
 {
   rustPlatform,
-  fetchFromGitHub,
   kdotool,
   writeShellScriptBin,
   instances,

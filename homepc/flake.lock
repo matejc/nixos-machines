@@ -57,16 +57,16 @@
     "parental-watchdog": {
       "flake": false,
       "locked": {
-        "lastModified": 1769876857,
-        "narHash": "sha256-wz215M2pJL/43tAWSmE089GBXHRT3PC5xdBBpKd/6T8=",
+        "lastModified": 1769969897,
+        "narHash": "sha256-zr2Re7NE51vt3t56Ycv19gxfcw89GmUr/7mMuYMDJQs=",
         "owner": "matejc",
         "repo": "parental-watchdog",
-        "rev": "e30b67b493a92b6f4aab04485a93fcd9a691a0b1",
+        "rev": "97d69323746120202750bd9ad8c388030e18540c",
         "type": "github"
       },
       "original": {
         "owner": "matejc",
-        "ref": "v0.3.0",
+        "ref": "v0.3.1",
         "repo": "parental-watchdog",
         "type": "github"
       }

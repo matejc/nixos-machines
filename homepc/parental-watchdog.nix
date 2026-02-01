@@ -21,6 +21,8 @@ let
       backend ? "kdotool",
       cmd-pattern ? "",
       title-pattern ? "",
+      time-begin ? "6:00",
+      time-end ? "21:00",
     }:
     writeTextDir "share/${package.pname}/parental-watchdog-${name}.service" ''
       [Unit]
@@ -33,7 +35,7 @@ let
         if cmd-pattern != "" then "--cmd-pattern '${cmd-pattern}'" else ""
       } ${
         if title-pattern != "" then "--title-pattern '${title-pattern}'" else ""
-      } --limit ${toString limit} --warn-before ${toString warn-before}
+      } --limit ${toString limit} --warn-before ${toString warn-before} --time-begin ${time-begin} --time-end ${time-end}
       Environment=PATH=${
         lib.makeBinPath [
           kdotool
@@ -70,7 +72,7 @@ let
     pname = "parental-watchdog";
     version = "dev";
     src = parental-watchdog-src;
-    cargoHash = "sha256-YtOMEtOK13DE0yfFQ2c5LRp5TydzrFn1DH7qji4X3Rw=";
+    cargoHash = "sha256-H5vVuZ0+4gKhpEnVJInGFedtx4ffnT+PNLtN0kWtIu8=";
   };
 in
 buildEnv {

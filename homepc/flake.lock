@@ -40,11 +40,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1768664748,
-        "narHash": "sha256-AX1mLisAOCPkeBsIGfd2JLXUnSbIFiwJR6eACN4/rYc=",
+        "lastModified": 1769792325,
+        "narHash": "sha256-fpIcVT/VHgudFr1jydBzY4vBQB7MT0ESWh+tRvayjYg=",
         "owner": "matejc",
         "repo": "nixpkgs",
-        "rev": "c95a778d0ea122c2c47d0aacc8cabbb442456902",
+        "rev": "4cd5bb0f6e4ef379da55981ff88573e992cae9a0",
         "type": "github"
       },
       "original": {
@@ -57,16 +57,16 @@
     "parental-watchdog": {
       "flake": false,
       "locked": {
-        "lastModified": 1769701062,
-        "narHash": "sha256-vJIlB0vJr9YauOV5yX9LofWubZJLuFHsSn8isT1z0/s=",
+        "lastModified": 1769876857,
+        "narHash": "sha256-wz215M2pJL/43tAWSmE089GBXHRT3PC5xdBBpKd/6T8=",
         "owner": "matejc",
         "repo": "parental-watchdog",
-        "rev": "196cc2b40b2a351c7c20df8deed498f930888d2e",
+        "rev": "e30b67b493a92b6f4aab04485a93fcd9a691a0b1",
         "type": "github"
       },
       "original": {
         "owner": "matejc",
-        "ref": "v0.2.0",
+        "ref": "v0.3.0",
         "repo": "parental-watchdog",
         "type": "github"
       }

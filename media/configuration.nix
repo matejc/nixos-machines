@@ -67,8 +67,13 @@ in
       ];
       trusted-users = [ "@wheel" ];
     };
-    gc = {
-      automatic = true;
+  };
+
+  programs.nh = {
+    enable = true;
+    clean = {
+      enable = true;
+      extraArgs = "--keep 10 --keep-since 7d";
       dates = "daily";
     };
   };

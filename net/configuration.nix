@@ -1,6 +1,6 @@
 { config, pkgs, lib, inputs, ... }:
 let
-  vars = import ./vars.nix;
+  vars = import ./vars.nix { inherit pkgs; };
 
   init-mongo-js = pkgs.writeText "init-mongo.js" ''
     db.getSiblingDB("unifi").createUser({user: "unifi", pwd: "${vars.mongo_pass}", roles: [{role: "dbOwner", db: "unifi"}]});
@@ -25,7 +25,7 @@ in {
     })
   ];
 
-  environment.systemPackages = with pkgs; [ nano curl iproute2 htop ncdu ];
+  environment.systemPackages = with pkgs; [ nano curl iproute2 htop ncdu ] ++ vars.packages;
 
   services.openssh.enable = true;
 
@@ -47,8 +47,13 @@ in {
       experimental-features = [ "nix-command" "flakes" ];
       trusted-users = [ "@wheel" ];
     };
-    gc = {
-      automatic = true;
+  };
+
+  programs.nh = {
+    enable = true;
+    clean = {
+      enable = true;
+      extraArgs = "--keep 10 --keep-since 7d";
       dates = "daily";
     };
   };
@@ -92,7 +97,7 @@ in {
           directory = "/var/lib/pihole";
           compose = {
             services.pihole = {
-              image = "pihole/pihole:2025.11.0";
+              image = "pihole/pihole:2025.11.1";
               environment = {
                 TZ = "Europe/Helsinki";
                 FTLCONF_webserver_api_password = vars.pihole_webpassword;
@@ -115,7 +120,7 @@ in {
           directory = "/var/lib/unifi";
           compose = {
             services.unifi = {
-              image = "lscr.io/linuxserver/unifi-network-application:9.5.21";
+              image = "lscr.io/linuxserver/unifi-network-application:10.1.85";
               environment = {
                 TZ = "Europe/Helsinki";
                 PUID = "${toString config.users.users.unifi.uid}";
@@ -284,6 +289,8 @@ in {
   };
 */
   nixpkgs.config.allowUnfree = true;
+
+  systemd = vars.config.systemd;
 
   system.stateVersion = "23.11";
 }

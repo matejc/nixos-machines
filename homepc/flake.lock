@@ -9,11 +9,11 @@
         "utils": "utils"
       },
       "locked": {
-        "lastModified": 1766051518,
-        "narHash": "sha256-znKOwPXQnt3o7lDb3hdf19oDo0BLP4MfBOYiWkEHoik=",
+        "lastModified": 1770019181,
+        "narHash": "sha256-hwsYgDnby50JNVpTRYlF3UR/Rrpt01OrxVuryF40CFY=",
         "owner": "serokell",
         "repo": "deploy-rs",
-        "rev": "d5eff7f948535b9c723d60cd8239f8f11ddc90fa",
+        "rev": "77c906c0ba56aabdbc72041bf9111b565cdd6171",
         "type": "github"
       },
       "original": {
@@ -40,11 +40,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1769792325,
-        "narHash": "sha256-fpIcVT/VHgudFr1jydBzY4vBQB7MT0ESWh+tRvayjYg=",
+        "lastModified": 1771780438,
+        "narHash": "sha256-d5MVKjQ3m7ykAX2qzs+owf2e5UzX/vYYqkXb4L5kOTc=",
         "owner": "matejc",
         "repo": "nixpkgs",
-        "rev": "4cd5bb0f6e4ef379da55981ff88573e992cae9a0",
+        "rev": "84515f16f102e71206bbafab6cc66ee602ec8990",
         "type": "github"
       },
       "original": {
@@ -57,16 +57,16 @@
     "parental-watchdog": {
       "flake": false,
       "locked": {
-        "lastModified": 1769969897,
-        "narHash": "sha256-zr2Re7NE51vt3t56Ycv19gxfcw89GmUr/7mMuYMDJQs=",
+        "lastModified": 1772895546,
+        "narHash": "sha256-icEqbKgErDiMqwOVbZmKXB9JZsHSCqacg6JccgeeLCI=",
         "owner": "matejc",
         "repo": "parental-watchdog",
-        "rev": "97d69323746120202750bd9ad8c388030e18540c",
+        "rev": "834f1442f2f1d074291788e62f227e0395a43f72",
         "type": "github"
       },
       "original": {
         "owner": "matejc",
-        "ref": "v0.3.1",
+        "ref": "v0.4.2",
         "repo": "parental-watchdog",
         "type": "github"
       }

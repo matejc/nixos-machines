@@ -12,18 +12,17 @@
   parental-watchdog-src,
 }:
 let
+  mkConfigFile = name: config: writeTextDir "share/${package.pname}/${name}.yaml" (lib.generators.toYAML {} (config // {
+    user = config.user;
+    backend = "kdotool";
+    backend_path = "${kdotool}/bin/kdotool";
+  }));
   mkSystemdService =
     name:
-    {
-      user,
-      limit ? 7200,
-      warn-before ? 900,
-      backend ? "kdotool",
-      cmd-pattern ? "",
-      title-pattern ? "",
-      time-begin ? "6:00",
-      time-end ? "21:00",
-    }:
+    config:
+    let
+      configFile = mkConfigFile name config;
+    in
     writeTextDir "share/${package.pname}/parental-watchdog-${name}.service" ''
       [Unit]
       Description=Parental control app (${name})
@@ -31,14 +30,10 @@ let
 
       [Service]
       Type=simple
-      ExecStart=${package}/bin/${package.pname} --user ${user} --apps-file "/root/.local/state/parental-watchdog-${name}" --backend ${backend} ${
-        if cmd-pattern != "" then "--cmd-pattern '${cmd-pattern}'" else ""
-      } ${
-        if title-pattern != "" then "--title-pattern '${title-pattern}'" else ""
-      } --limit ${toString limit} --warn-before ${toString warn-before} --time-begin ${time-begin} --time-end ${time-end}
+      ExecStartPre=mkdir -p /var/lib/${package.pname}
+      ExecStart=${package}/bin/${package.pname} run -c "${configFile}/share/${package.pname}/${name}.yaml" -a "/var/lib/${package.pname}/${name}"
       Environment=PATH=${
         lib.makeBinPath [
-          kdotool
           util-linux
           procps
           libnotify
@@ -52,9 +47,23 @@ let
       WantedBy=multi-user.target
     '';
 
+  mkRemainingScript = name: config: writeShellScriptBin "${package.pname}-remaining-${name}" ''
+    ${package}/bin/${package.pname} time-remaining -c "${configs}/share/${package.pname}/${name}.yaml" -a "/var/lib/${package.pname}/${name}"
+  '';
+
   services = buildEnv {
     name = "${package.pname}-services";
     paths = lib.mapAttrsToList mkSystemdService instances;
+  };
+
+  configs = buildEnv {
+    name = "${package.pname}-configs";
+    paths = lib.mapAttrsToList mkConfigFile instances;
+  };
+
+  remainingScripts = buildEnv {
+    name = "${package.pname}-scripts";
+    paths = lib.mapAttrsToList mkRemainingScript instances;
   };
 
   activationScript = writeShellScriptBin "parental-watchdog-activate" ''
@@ -72,15 +81,16 @@ let
     pname = "parental-watchdog";
     version = "dev";
     src = parental-watchdog-src;
-    cargoHash = "sha256-bZKKqhCEI2AFJv9ug3/5qmkT4cDSHj/B+B9ilG0Jewc=";
+    cargoHash = "sha256-BZGoRiRB5yRZc0FghHriRvbijRv3smyFKO9lk8cBqH8=";
   };
 in
 buildEnv {
   name = "${package.pname}-env";
   paths = [
-    kdotool
     package
     activationScript
     services
+    configs
+    remainingScripts
   ];
 }

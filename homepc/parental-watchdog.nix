@@ -81,7 +81,7 @@ let
     pname = "parental-watchdog";
     version = "dev";
     src = parental-watchdog-src;
-    cargoHash = "sha256-BZGoRiRB5yRZc0FghHriRvbijRv3smyFKO9lk8cBqH8=";
+    cargoHash = "sha256-L8CAZNLUq7a0224KcB8tHrN+kM0q5ZH8EykidetnifM=";
   };
 in
 buildEnv {

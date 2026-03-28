@@ -12,10 +12,11 @@
   parental-watchdog-src,
 }:
 let
-  mkConfigFile = name: config: writeTextDir "share/${package.pname}/${name}.yaml" (lib.generators.toYAML {} (config // {
-    user = config.user;
-    backend = "kdotool";
-    backend_path = "${kdotool}/bin/kdotool";
+  mkConfigFile = name: config: writeTextDir "share/${package.pname}/${name}.yaml" (lib.generators.toYAML {} (lib.recursiveUpdate config {
+    default = {
+      backend = "kdotool";
+      backend_path = "${kdotool}/bin/kdotool";
+    };
   }));
   mkSystemdService =
     name:
@@ -81,7 +82,7 @@ let
     pname = "parental-watchdog";
     version = "dev";
     src = parental-watchdog-src;
-    cargoHash = "sha256-L8CAZNLUq7a0224KcB8tHrN+kM0q5ZH8EykidetnifM=";
+    cargoHash = "sha256-I+Fel93IYBa3zcK5kMWVZ1zJAh0UMUljYNlkr4V3OpE=";
   };
 in
 buildEnv {

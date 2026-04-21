@@ -135,6 +135,7 @@ lib.recursiveUpdate {
 
   services.pihole-web = {
     enable = true;
+    hostName = "pihole.local";
     ports = [ 18000 ];
   };
 

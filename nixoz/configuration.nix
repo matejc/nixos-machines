@@ -14,6 +14,8 @@ lib.recursiveUpdate {
 
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
+  time.timeZone = "Europe/Helsinki";
+
   environment.systemPackages =
     with pkgs;
     [

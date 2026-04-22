@@ -97,11 +97,11 @@ in {
           directory = "/var/lib/pihole";
           compose = {
             services.pihole = {
-              image = "pihole/pihole:2025.11.1";
+              image = "pihole/pihole:2026.02.0";
               environment = {
                 TZ = "Europe/Helsinki";
                 FTLCONF_webserver_api_password = vars.pihole_webpassword;
-                FTLCONF_webserver_port = "443s";
+                FTLCONF_webserver_port = "443";
                 FTLCONF_dns_upstreams = lib.strings.concatStringsSep ";" vars.nameservers;
               };
               volumes = [
@@ -290,7 +290,7 @@ in {
 */
   nixpkgs.config.allowUnfree = true;
 
-  systemd = vars.config.systemd;
+  systemd.services = vars.config.systemd.services;
 
   system.stateVersion = "23.11";
 }

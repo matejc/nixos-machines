@@ -77,6 +77,11 @@ lib.recursiveUpdate {
     enable = true;
     dataDir = "/mnt/storage/jellyfin-data";
     cacheDir = "/mnt/storage/jellyfin-cache";
+    hardwareAcceleration = {
+      enable = true;
+      type = "vaapi";
+      device = "/dev/dri/renderD128";
+    };
   };
 
   systemd.timers."fetch_script" = {

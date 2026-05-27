@@ -5,9 +5,6 @@
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nixos-hardware = {
-      url = "github:NixOS/nixos-hardware";
-    };
     upaas = {
       url = "github:matejc/upaas/master";
       flake = false;

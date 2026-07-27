@@ -28,7 +28,7 @@
       deploy.nodes.homepc = {
         sshUser = "root";
         user = "root";
-        hostname = "192.168.88.127";
+        hostname = "192.168.88.21";
         autoRollback = false;
         profiles.parental-watchdog = {
           path =

@@ -120,6 +120,7 @@ lib.recursiveUpdate {
           "${vars.address} media.local"
           "${vars.address} pihole.local"
           "${vars.address} unifi.local"
+          "${vars.address} ${vars.hostname}.${vars.domain}"
         ];
         ignoreLocalhost = true;
       };
@@ -171,6 +172,17 @@ lib.recursiveUpdate {
       reverse_proxy http://127.0.0.1:18000
       tls internal
     '';
+    virtualHosts."${vars.hostname}.${vars.domain}:443" = {
+      extraConfig = ''
+        tls internal
+        reverse_proxy http://127.0.0.1:8096
+      '';
+    };
+    virtualHosts."${vars.hostname}.${vars.domain}:80" = {
+      extraConfig = ''
+        reverse_proxy http://127.0.0.1:8096
+      '';
+    };
   };
 
   networking.firewall.allowedTCPPorts = [
@@ -183,4 +195,62 @@ lib.recursiveUpdate {
   nixpkgs.config.allowUnfree = true;
 
   system.stateVersion = "25.11";
+
+  environment.etc."alloy/loki.alloy".text = ''
+    loki.relabel "journal" {
+      forward_to = []
+
+      rule {
+        source_labels = [ "__journal__systemd_unit" ]
+        target_label = "unit"
+      }
+      rule {
+        source_labels = [ "__journal__boot_id" ]
+        target_label = "boot_id"
+      }
+      rule {
+        source_labels = [ "__journal__transport" ]
+        target_label = "transport"
+      }
+      rule {
+        source_labels = [ "__journal_priority_keyword" ]
+        target_label = "level"
+      }
+    }
+
+    loki.source.journal "read"  {
+      forward_to    = [loki.write.endpoint.receiver]
+      relabel_rules = loki.relabel.journal.rules
+      labels        = {
+        component = "loki.source.journal",
+        instance = "${config.networking.hostName}",
+      }
+    }
+
+    loki.write "endpoint" {
+      endpoint {
+        url = "${vars.loki_push_url}"
+      }
+    }
+  '';
+  environment.etc."alloy/prometheus.alloy".text = ''
+    prometheus.exporter.unix "local_system" {
+      enable_collectors = ["systemd"]
+    }
+
+    prometheus.scrape "local_system" {
+      targets         = prometheus.exporter.unix.local_system.targets
+      forward_to      = [prometheus.remote_write.metrics_service.receiver]
+    }
+
+    prometheus.remote_write "metrics_service" {
+      endpoint {
+        url = "${vars.prom_push_url}"
+      }
+    }
+  '';
+  services.alloy = {
+    enable = true;
+  };
+
 } vars.config

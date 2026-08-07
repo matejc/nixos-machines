@@ -117,9 +117,9 @@ lib.recursiveUpdate {
       dns = {
         upstreams = vars.nameservers;
         hosts = [
-          "${vars.address} media.local"
-          "${vars.address} pihole.local"
-          "${vars.address} unifi.local"
+          "${vars.address} media.home.arpa"
+          "${vars.address} pihole.home.arpa"
+          "${vars.address} unifi.home.arpa"
           "${vars.address} ${vars.hostname}.${vars.domain}"
         ];
         ignoreLocalhost = true;
@@ -143,22 +143,22 @@ lib.recursiveUpdate {
 
   services.pihole-web = {
     enable = true;
-    hostName = "pihole.local";
+    hostName = "pihole.home.arpa";
     ports = [ 18000 ];
   };
 
   services.caddy = {
     enable = true;
-    virtualHosts."media.local:443".extraConfig = ''
+    virtualHosts."media.home.arpa:443".extraConfig = ''
       reverse_proxy http://127.0.0.1:8096
       tls internal
     '';
-    virtualHosts."media.local:80" = {
+    virtualHosts."media.home.arpa:80" = {
       extraConfig = ''
         reverse_proxy http://127.0.0.1:8096
       '';
     };
-    virtualHosts."unifi.local:443" = {
+    virtualHosts."unifi.home.arpa:443" = {
       extraConfig = ''
         reverse_proxy https://127.0.0.1:8443 {
           header_up Host {host}
@@ -168,7 +168,7 @@ lib.recursiveUpdate {
         }
       '';
     };
-    virtualHosts."pihole.local:443".extraConfig = ''
+    virtualHosts."pihole.home.arpa:443".extraConfig = ''
       reverse_proxy http://127.0.0.1:18000
       tls internal
     '';

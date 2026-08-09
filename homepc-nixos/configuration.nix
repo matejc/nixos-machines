@@ -170,7 +170,10 @@ in
   };
 
   services.flatpak.enable = true;
-  programs.steam.enable = true;
+  programs.steam = {
+    enable = true;
+    extraCompatPackages = with pkgs; [ proton-ge-bin ];
+  };
 
   nix = {
     channel.enable = false;

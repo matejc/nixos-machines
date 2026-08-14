@@ -19,6 +19,13 @@ in
     ];
   };
 
+  services.scx.enable = true;
+  services.scx.scheduler = "scx_lavd";
+  services.scx.extraArgs = [
+    "--performance"
+  ];
+  services.scx.package = pkgs.scx.full;
+
   # Use latest kernel.
   boot.kernelPackages = pkgs.linuxPackages;
 

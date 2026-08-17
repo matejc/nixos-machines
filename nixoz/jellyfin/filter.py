@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 import jellyfin
 from jellyfin.generated import (
@@ -12,9 +13,12 @@ from jellyfin.generated import (
     PlaylistsApi,
 )
 
+FRAME_SIZE = 64 * 64
+
 api_key: str = os.getenv("JELLYFIN_API_KEY", "")
+ffmpeg_path: str = os.getenv("JELLYFIN_FFMPEG", "ffmpeg")
 dryrun: bool = os.getenv("JELLYFIN_DRYRUN", "") != ""
-api = jellyfin.api(os.getenv("JELLYFIN_URL", "http://media.local"), api_key)
+api = jellyfin.api(os.getenv("JELLYFIN_URL", "http://media.home.arpa"), api_key)
 user = api.users.of(os.getenv("JELLYFIN_USER", ""))
 items_api = ItemsApi(api.client)
 playlists_api = PlaylistsApi(api.client)
@@ -46,6 +50,41 @@ def get_playlist(
 
     return created_playlist
 
+def extract_frame(path: str, timestamp: float) -> bytes:
+      if not os.path.isfile(path):
+          raise FileNotFoundError(f"Media path does not exist or is not a file: {path!r}")
+      if not os.access(path, os.R_OK):
+          raise PermissionError(f"Media path is not readable: {path!r}")
+
+      return subprocess.check_output(
+          [
+              ffmpeg_path,
+              "-hide_banner",
+              "-nostdin",
+              "-loglevel", "error",
+              "-ss", str(timestamp),
+              "-i", path,
+              "-frames:v", "1",
+              "-vf", "scale=64:64,format=gray",
+              "-f", "rawvideo",
+              "-",
+          ]
+      )
+
+def frames_mean_difference(path: str, duration: float) -> float:
+    first = extract_frame(path, duration * 0.33)
+    second = extract_frame(path, duration * 0.66)
+
+    if len(first) != FRAME_SIZE or len(second) != FRAME_SIZE:
+        return False
+
+    mean_difference = sum(
+        abs(a - b) for a, b in zip(first, second)
+    ) / FRAME_SIZE
+
+    # Pixel values range from 0 to 255.
+    return mean_difference
+
 library_api = api.generated.LibraryStructureApi(api.client)
 libraries = library_api.get_virtual_folders()
 
@@ -75,16 +114,21 @@ for library in music_video_libraries:
     )
 
     for item in library_items:
-        length_seconds = item.run_time_ticks // 10_000_000
-        size_mbytes = item.media_sources[0].size // 1_000_000
-        if length_seconds < 600 and size_mbytes > 20 and not any(
+        duration_seconds = item.run_time_ticks // 10_000_000
+        source = item.media_sources[0]
+        size_mbytes = source.size // 1_000_000
+        if duration_seconds >= 600 or any(
                 playlist_item.id == item.id
                 for playlist_item in playlist_items.items or []
             ):
-                print(f"Add '{item.name}' (lenght: {length_seconds}s, size: {size_mbytes}MB) to playlist: '{playlist.name}' ...")
-                if not dryrun:
-                    playlists_api.add_item_to_playlist(
-                        playlist_id=playlist.id,
-                        ids=[item.id],
-                        user_id=user.id,
-                    )
+            continue
+        difference = frames_mean_difference(source.path, duration_seconds)
+        if difference <= 5.0:
+            continue
+        print(f"Add '{item.name}' (length: {duration_seconds}s, size: {size_mbytes}MB, diff: {difference}) to playlist: '{playlist.name}' ...")
+        if not dryrun:
+            playlists_api.add_item_to_playlist(
+                playlist_id=playlist.id,
+                ids=[item.id],
+                user_id=user.id,
+            )

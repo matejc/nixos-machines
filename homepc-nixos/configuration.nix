@@ -27,7 +27,7 @@ in
   services.scx.package = pkgs.scx.full;
 
   # Use latest kernel.
-  boot.kernelPackages = pkgs.linuxPackages;
+  boot.kernelPackages = pkgs.linuxPackages_latest;
 
   networking.hostName = "homepc"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -119,6 +119,7 @@ in
       kdePackages.kate
       prismlauncher
       freetube
+      protonup-qt
     ];
     group = "sahiru";
   };
@@ -138,6 +139,8 @@ in
   #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
   #  wget
     htop
+    pciutils
+    vulkan-tools
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -174,6 +177,7 @@ in
     modesetting.enable = true;
     powerManagement.enable = true;
     powerManagement.finegrained = false;
+    package = config.boot.kernelPackages.nvidiaPackages.latest;
   };
 
   services.flatpak.enable = true;

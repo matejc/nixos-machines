@@ -1,6 +1,6 @@
 { lib ? (import <nixpkgs> {}).lib, machineName, ... }:
 let
-  secretFiles = builtins.attrNames (builtins.readDir (./.. + "/${machineName}/secrets"));
+  secretFiles = builtins.attrNames (builtins.readDir (./../machines + "/${machineName}/secrets"));
 
   secretNames =
     map
@@ -11,7 +11,7 @@ let
 
   mkAgeSecrets = names: {
     secrets = lib.genAttrs names (name: {
-      file = ./../${machineName}/secrets/${name}.age;
+      file = ./../machines/${machineName}/secrets/${name}.age;
     });
   };
 in {

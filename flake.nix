@@ -37,8 +37,8 @@
           inputs.agenix.nixosModules.default
           ./modules/my.nix
           ./modules/secrets.nix
-          (./. + "/${machineName}/configuration.nix")
-          (./. + "/${machineName}/hardware-configuration.nix")
+          (./machines + "/${machineName}/configuration.nix")
+          (./machines + "/${machineName}/hardware-configuration.nix")
         ];
       });
     mkDeploy =
@@ -71,12 +71,12 @@
           set -euo pipefail
           machineName="''${1?"Missing machine name as first arg!"}"
           identityFile="''${2?"Missing SSH identity file as second arg!"}"
-          hostnamePath="./$machineName/secrets/hostname.age"
+          hostnamePath="./machines/$machineName/secrets/hostname.age"
           if [[ ! -f "$hostnamePath" ]]; then
             echo "Hostname secret not found: $hostnamePath"
             exit 1
           fi
-          for secretPath in "./$machineName/secrets/"*.age; do
+          for secretPath in "./machines/$machineName/secrets/"*.age; do
             secretName="$(basename "$secretPath" .age)"
             envName="$(printf 'NIX_SECRET_%s' "$secretName" | tr '[:lower:]-' '[:upper:]_')"
             envValue="$(${pkgs.age}/bin/age --identity "$identityFile" --decrypt "$secretPath")"
@@ -98,8 +98,8 @@
             echo "SSH identity file does not exist!" >&2
             exit 1
           fi
-          mkdir -p ./$machineName/secrets
-          secretPath="./$machineName/secrets/$secretName.age"
+          mkdir -p ./machines/$machineName/secrets
+          secretPath="./machines/$machineName/secrets/$secretName.age"
 
           tmpDir="''${XDG_CACHE_DIR:-"$HOME/.cache"}/agenix/$machineName"
           mkdir -p "$tmpDir"
@@ -113,7 +113,7 @@
 
           ${pkgs.age}/bin/age \
             --encrypt \
-            --recipients-file ./$machineName/recipients \
+            --recipients-file ./machines/$machineName/recipients \
             --output "$secretPath" \
             "$tmpDir/secret"
         '');
@@ -129,11 +129,11 @@
             exit 1
           fi
 
-          for file in ./$machineName/secrets/*.age; do
+          for file in ./machines/$machineName/secrets/*.age; do
               [ -e "$file" ] || continue
               echo "Re-encrypting: $file"
               ${pkgs.age}/bin/age --decrypt --identity "$identityFile" "$file" | \
-                  ${pkgs.age}/bin/age --encrypt --recipients-file ./$machineName/recipients --output "''${file}.new"
+                  ${pkgs.age}/bin/age --encrypt --recipients-file ./machines/$machineName/recipients --output "''${file}.new"
               mv "''${file}.new" "$file"
           done
         '');

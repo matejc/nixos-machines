@@ -1,5 +1,0 @@
----
-- hosts: printers
-  roles:
-    - common
-    - printer

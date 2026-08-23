@@ -1,6 +1,0 @@
----
-- hosts: piholes
-  roles:
-    - common
-    - docker
-    - pihole

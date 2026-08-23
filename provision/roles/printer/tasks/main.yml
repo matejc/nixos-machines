@@ -1,7 +1,0 @@
----
-- name: Setup Klipper
-  include_tasks: klipper.yml
-- name: Setup Moonraker
-  include_tasks: moonraker.yml
-- name: Setup Mainsail
-  include_tasks: mainsail.yml

@@ -195,6 +195,7 @@ in {
   };
 
   services.piholeSchedule = {
+    enable = true;
     apiUrl = "http://127.0.0.1:18000";
     environmentFile = config.age.secrets.pihole-env.path;
     timers = {
@@ -203,7 +204,6 @@ in {
         client_group_map = [
           { client = "26:8B:9D:7E:25:FB"; group = "Limited"; }  # phone
           { client = "64:D6:9A:BE:59:79"; group = "Limited"; }  # school laptop
-          { client = "C8:E2:65:0A:04:A1"; group = "Adults"; }  # homepc
         ];
       };
       kid-notime = {
@@ -211,7 +211,6 @@ in {
         client_group_map = [
           { client = "26:8B:9D:7E:25:FB"; group = "Block"; }  # phone
           { client = "64:D6:9A:BE:59:79"; group = "Block"; }  # school laptop
-          { client = "C8:E2:65:0A:04:A1"; group = "Block"; }  # homepc
         ];
       };
     };
@@ -297,23 +296,13 @@ in {
       }
     }
 
-    local.file "loki_url" {
-      filename = "${config.age.secrets.loki-url.path}"
-      is_secret = true
-    }
-
     loki.write "endpoint" {
       endpoint {
-        url = string.trim_space(local.file.loki_url.content)
+        url = sys.env("LOKI_URL")
       }
     }
   '';
   environment.etc."alloy/prometheus.alloy".text = ''
-    local.file "prometheus_url" {
-      filename = "${config.age.secrets.prom-url.path}"
-      is_secret = true
-    }
-
     prometheus.exporter.unix "local_system" {
       enable_collectors = ["systemd"]
     }
@@ -325,11 +314,12 @@ in {
 
     prometheus.remote_write "metrics_service" {
       endpoint {
-        url = string.trim_space(local.file.prometheus_url.content)
+        url = sys.env("PROM_URL")
       }
     }
   '';
   services.alloy = {
     enable = true;
+    environmentFile = config.age.secrets.alloy-env.path;
   };
 }

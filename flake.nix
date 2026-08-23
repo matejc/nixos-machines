@@ -17,16 +17,21 @@
       url = "github:ryantm/agenix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    parental-watchdog = {
+      url = "github:matejc/parental-watchdog/v0.5.0";
+      flake = false;
+    };
   };
   outputs = { self, ... }@inputs: let
     defaultSystem = "x86_64-linux";
     pkgs = inputs.nixpkgs.legacyPackages.${defaultSystem};
+    lib = pkgs.lib;
     defaultUser = "matejc";
     mkSystem =
       {
         machineName,
-        system ? defaultSystem,
-        modules ? [ ],
+        system,
+        modules,
       }:
       (inputs.nixpkgs.lib.nixosSystem {
         inherit system;
@@ -44,8 +49,8 @@
     mkDeploy =
       {
         machineName,
-        system ? defaultSystem,
-        extraAttrs ? {},
+        system,
+        extraAttrs,
       }: {
         hostname = machineName;  # a hack so that schema check passes, the hostname will be overriden by .#deploy
         sshUser = defaultUser;
@@ -54,16 +59,40 @@
           path = inputs.deploy-rs.lib.${system}.activate.nixos self.nixosConfigurations.${machineName};
         };
       } // extraAttrs;
-  in {
-    nixosConfigurations.nixoz = mkSystem {
-      machineName = "nixoz";
-      modules = [
-        "${inputs.upaas}/module.nix"
-        ./modules/pihole-schedule.nix
-      ];
+    mkMachineDeploy = machineName: {
+      system ? defaultSystem,
+      modules ? [ ],
+      extraDeployAttrs ? {},
+    }: let
+      deployChecks = inputs.deploy-rs.lib.${defaultSystem}.deployChecks {
+        nodes.${machineName} = self.deploy.nodes.${machineName};
+      };
+    in {
+      nixosConfigurations.${machineName} = mkSystem {
+        inherit machineName modules system;
+      };
+      deploy.nodes.${machineName} = mkDeploy {
+        inherit machineName system;
+        extraAttrs = extraDeployAttrs;
+      };
+      checks.${defaultSystem} = {
+        "${machineName}-deploy-schema" = deployChecks.deploy-schema;
+        "${machineName}-deploy-activate" = deployChecks.deploy-activate;
+      };
     };
-    deploy.nodes.nixoz = mkDeploy { machineName = "nixoz"; };
-
+    machines = {
+      nixoz = {
+        modules = [
+          ./modules/pihole-schedule.nix
+        ];
+      };
+      homepc = {
+        modules = [
+          ./modules/parental-watchdog.nix
+        ];
+      };
+    };
+  in lib.foldl' lib.recursiveUpdate {} ((lib.mapAttrsToList mkMachineDeploy machines) ++ [{
     apps.${defaultSystem} = {
       deploy = {
         type = "app";
@@ -83,8 +112,12 @@
             export "$envName=$envValue"
           done
 
+          # pre-check only this machine
+          nix build --no-link --impure ".#checks.${defaultSystem}.''${machineName}-deploy-schema"
+          nix build --no-link --impure ".#checks.${defaultSystem}.''${machineName}-deploy-activate"
+
           echo "Deploying $machineName to $NIX_SECRET_HOSTNAME"
-          exec ${inputs.deploy-rs.packages.${defaultSystem}.default}/bin/deploy ".#$machineName" --hostname "$NIX_SECRET_HOSTNAME" -- --impure
+          exec ${inputs.deploy-rs.packages.${defaultSystem}.default}/bin/deploy ".#$machineName" --hostname "$NIX_SECRET_HOSTNAME" --skip-checks -- --impure
         '');
       };
       encrypt = {
@@ -103,19 +136,19 @@
 
           tmpDir="''${XDG_CACHE_DIR:-"$HOME/.cache"}/agenix/$machineName"
           mkdir -p "$tmpDir"
-          trap 'rm "$tmpDir/secret"; rmdir "$tmpDir"' EXIT
+          trap 'rm "$tmpDir/$secretName"; rmdir "$tmpDir"' EXIT
 
           if [[ -f "$secretPath" ]]; then
-            ${pkgs.age}/bin/age --identity "$identityFile" --decrypt "$secretPath" > "$tmpDir/secret"
+            ${pkgs.age}/bin/age --identity "$identityFile" --decrypt "$secretPath" > "$tmpDir/$secretName"
           fi
 
-          "''${EDITOR:-nano}" "$tmpDir/secret"
+          "''${EDITOR:-nano}" "$tmpDir/$secretName"
 
           ${pkgs.age}/bin/age \
             --encrypt \
             --recipients-file ./machines/$machineName/recipients \
             --output "$secretPath" \
-            "$tmpDir/secret"
+            "$tmpDir/$secretName"
         '');
       };
       reencrypt = {
@@ -139,6 +172,5 @@
         '');
       };
     };
-    checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) inputs.deploy-rs.lib;
-  };
+  }]);
 }

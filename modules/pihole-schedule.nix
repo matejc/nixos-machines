@@ -61,6 +61,7 @@ let
 in
 {
   options.services.piholeSchedule = {
+    enable = lib.mkEnableOption "Enable pihole schedule";
     apiUrl = lib.mkOption {
       type = lib.types.str;
       description = "Pihole api url.";
@@ -88,7 +89,7 @@ in
       };
     };
   };
-  config = {
+  config = lib.mkIf config.services.piholeSchedule.enable {
     systemd = lib.mkMerge (lib.mapAttrsToList (n: _: mkPiholeTimer n) cfgTimers);
   };
 }

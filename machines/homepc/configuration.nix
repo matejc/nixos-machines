@@ -13,9 +13,10 @@ in
   };
 
   services.scx.enable = true;
-  services.scx.scheduler = "scx_lavd";
+  services.scx.scheduler = "scx_bpfland";
   services.scx.extraArgs = [
-    "--performance"
+    "-m"
+    "performance"
   ];
   services.scx.package = pkgs.scx.full;
 

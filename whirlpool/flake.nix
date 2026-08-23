@@ -9,10 +9,6 @@
       url = "github:matejc/nixmy/master";
       flake = false;
     };
-    helper_scripts = {
-      url = "github:matejc/helper_scripts/master";
-      flake = false;
-    };
     deploy-rs = {
       url = "github:serokell/deploy-rs";
       inputs.nixpkgs.follows = "nixpkgs";

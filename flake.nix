@@ -55,6 +55,7 @@
         hostname = machineName;  # a hack so that schema check passes, the hostname will be overriden by .#deploy
         sshUser = defaultUser;
         user = "root";
+        sshOpts = [];
         profiles.system = {
           path = inputs.deploy-rs.lib.${system}.activate.nixos self.nixosConfigurations.${machineName};
         };
@@ -78,6 +79,22 @@
       checks.${defaultSystem} = {
         "${machineName}-deploy-schema" = deployChecks.deploy-schema;
         "${machineName}-deploy-activate" = deployChecks.deploy-activate;
+      };
+      apps.${defaultSystem}."${machineName}-ssh" = {
+        type = "app";
+        program = toString (pkgs.writeShellScript "ssh.sh" ''
+          set -euo pipefail
+          machineName="${machineName}"
+          identityFile="''${1?"Missing SSH identity file as first arg!"}"
+          hostnamePath="./machines/$machineName/secrets/hostname.age"
+          if [[ ! -f "$hostnamePath" ]]; then
+            echo "Hostname secret not found: $hostnamePath"
+            exit 1
+          fi
+          hostname="$(${pkgs.age}/bin/age --identity "$identityFile" --decrypt "$hostnamePath")"
+
+          exec ssh -i $identityFile ${lib.join " " self.deploy.nodes.${machineName}.sshOpts} ${self.deploy.nodes.${machineName}.sshUser}@$hostname -- ''${@:2}
+        '');
       };
     };
     machines = {

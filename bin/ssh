@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+machineName="${1?"Missing machine name as first arg!"}"
+identityFile="${IDENTITY_FILE:-"$HOME/.ssh/id_ed25519"}"
+
+exec nix run ".#${machineName}-ssh" -- "$identityFile" "${@:2}"

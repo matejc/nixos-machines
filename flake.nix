@@ -115,16 +115,30 @@
         type = "app";
         program = toString (pkgs.writeShellScript "deploy.sh" ''
           set -euo pipefail
-          machineName="''${1?"Missing machine name as first arg!"}"
-          identityFile="''${2?"Missing SSH identity file as second arg!"}"
+          action="''${1?"Missing action (switch/boot/test) as first arg!"}"
+          machineName="''${2?"Missing machine name as second arg!"}"
+          identityFile="''${3?"Missing SSH identity file as third arg!"}"
+
+          deployArgs=""
+          case "$action" in
+              switch) ;;
+              boot) deployArgs="$deployArgs --boot";;
+              test) deployArgs="$deployArgs --test";;
+              *)
+                  echo "Error: First arg must be one of: switch, boot or test" >&2
+                  exit 1
+                  ;;
+          esac
+
           hostnamePath="./machines/$machineName/secrets/hostname.age"
           if [[ ! -f "$hostnamePath" ]]; then
-            echo "Hostname secret not found: $hostnamePath"
+            echo "Error: Hostname secret not found: $hostnamePath" >&2
             exit 1
           fi
+
           for secretPath in "./machines/$machineName/secrets/"*.age; do
             secretName="$(basename "$secretPath" .age)"
-            envName="$(printf 'NIX_SECRET_%s' "$secretName" | tr '[:lower:]-' '[:upper:]_')"
+            envName="$(printf 'NIX_SECRET_%s' "$secretName" | tr '[:lower:]-.' '[:upper:]__')"
             envValue="$(${pkgs.age}/bin/age --identity "$identityFile" --decrypt "$secretPath")"
             export "$envName=$envValue"
           done
@@ -133,8 +147,8 @@
           nix build --no-link --impure ".#checks.${defaultSystem}.''${machineName}-deploy-schema"
           nix build --no-link --impure ".#checks.${defaultSystem}.''${machineName}-deploy-activate"
 
-          echo "Deploying $machineName to $NIX_SECRET_HOSTNAME"
-          exec ${inputs.deploy-rs.packages.${defaultSystem}.default}/bin/deploy ".#$machineName" --hostname "$NIX_SECRET_HOSTNAME" --skip-checks -- --impure
+          echo "Deploying $machineName to $NIX_SECRET_HOSTNAME" >&2
+          exec ${inputs.deploy-rs.packages.${defaultSystem}.default}/bin/deploy ".#$machineName" --hostname "$NIX_SECRET_HOSTNAME" --skip-checks $deployArgs -- --impure
         '');
       };
       encrypt = {
@@ -181,7 +195,7 @@
 
           for file in ./machines/$machineName/secrets/*.age; do
               [ -e "$file" ] || continue
-              echo "Re-encrypting: $file"
+              echo "Re-encrypting: $file" >&2
               ${pkgs.age}/bin/age --decrypt --identity "$identityFile" "$file" | \
                   ${pkgs.age}/bin/age --encrypt --recipients-file ./machines/$machineName/recipients --output "''${file}.new"
               mv "''${file}.new" "$file"

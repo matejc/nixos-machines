@@ -147,13 +147,13 @@ in {
     };
   };
 
-  services.unifi = {
-    enable = true;
-    initialJavaHeapSize = 1024;
-    maximumJavaHeapSize = 2048;
-    openFirewall = true;
-    mongodbPackage = pkgs.mongodb-ce;
-  };
+  # services.unifi = {
+  #   enable = true;
+  #   initialJavaHeapSize = 1024;
+  #   maximumJavaHeapSize = 2048;
+  #   openFirewall = true;
+  #   mongodbPackage = pkgs.mongodb-ce;
+  # };
 
   services.pihole-ftl = {
     enable = true;
@@ -166,7 +166,7 @@ in {
         hosts = [
           "${my.getSecret "address"} media.home.arpa"
           "${my.getSecret "address"} pihole.home.arpa"
-          "${my.getSecret "address"} unifi.home.arpa"
+          # "${my.getSecret "address"} unifi.home.arpa"
           "${my.getSecret "address"} ${config.networking.hostName}.${my.getSecret "tailscale-domain"}"
         ];
         ignoreLocalhost = true;
@@ -227,16 +227,16 @@ in {
         reverse_proxy http://127.0.0.1:8096
       '';
     };
-    virtualHosts."unifi.home.arpa:443" = {
-      extraConfig = ''
-        reverse_proxy https://127.0.0.1:8443 {
-          header_up Host {host}
-          transport http {
-            tls_insecure_skip_verify
-          }
-        }
-      '';
-    };
+    # virtualHosts."unifi.home.arpa:443" = {
+    #   extraConfig = ''
+    #     reverse_proxy https://127.0.0.1:8443 {
+    #       header_up Host {host}
+    #       transport http {
+    #         tls_insecure_skip_verify
+    #       }
+    #     }
+    #   '';
+    # };
     virtualHosts."pihole.home.arpa:443".extraConfig = ''
       reverse_proxy http://127.0.0.1:18000
       tls internal

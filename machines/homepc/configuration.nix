@@ -86,6 +86,7 @@ in
       prismlauncher
       freetube
       protonup-qt
+      heroic
     ];
     group = kid;
   };

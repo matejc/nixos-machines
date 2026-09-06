@@ -92,7 +92,7 @@
             exit 1
           fi
           hostname="$(${pkgs.age}/bin/age --identity "$identityFile" --decrypt "$hostnamePath")"
-
+          export TERM=xterm-256color
           exec ssh -i $identityFile ${lib.join " " self.deploy.nodes.${machineName}.sshOpts} ${self.deploy.nodes.${machineName}.sshUser}@$hostname -- ''${@:2}
         '');
       };

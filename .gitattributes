@@ -1,2 +1,0 @@
-/*/vars.nix filter=git-crypt diff=git-crypt
-/whirlpool/configuration.nix filter=git-crypt diff=git-crypt

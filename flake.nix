@@ -21,6 +21,14 @@
       url = "github:matejc/parental-watchdog/v0.5.0";
       flake = false;
     };
+    nix-matrix-appservices = {
+      url = "gitlab:coffeetables/nix-matrix-appservices";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nixmy = {
+      url = "github:matejc/nixmy/master";
+      flake = false;
+    };
   };
   outputs = { self, ... }@inputs: let
     defaultSystem = "x86_64-linux";
@@ -86,14 +94,14 @@
           set -euo pipefail
           machineName="${machineName}"
           identityFile="''${1?"Missing SSH identity file as first arg!"}"
-          hostnamePath="./machines/$machineName/secrets/hostname.age"
-          if [[ ! -f "$hostnamePath" ]]; then
-            echo "Hostname secret not found: $hostnamePath"
-            exit 1
-          fi
-          hostname="$(${pkgs.age}/bin/age --identity "$identityFile" --decrypt "$hostnamePath")"
+          for secretPath in "./machines/$machineName/secrets/"*.age; do
+            secretName="$(basename "$secretPath" .age)"
+            envName="$(printf 'NIX_SECRET_%s' "$secretName" | tr '[:lower:]-.' '[:upper:]__')"
+            envValue="$(${pkgs.age}/bin/age --identity "$identityFile" --decrypt "$secretPath")"
+            export "$envName=$envValue"
+          done
           export TERM=xterm-256color
-          exec ssh -i $identityFile ${lib.join " " self.deploy.nodes.${machineName}.sshOpts} ${self.deploy.nodes.${machineName}.sshUser}@$hostname -- ''${@:2}
+          exec ssh -i $identityFile ${lib.join " " self.deploy.nodes.${machineName}.sshOpts} ''${NIX_SECRET_SSH_PORT:+-p "$NIX_SECRET_SSH_PORT"} ${self.deploy.nodes.${machineName}.sshUser}@$NIX_SECRET_HOSTNAME -- ''${@:2}
         '');
       };
     };
@@ -107,6 +115,14 @@
         modules = [
           ./modules/parental-watchdog.nix
         ];
+      };
+      whirlpool = {
+        modules = [
+          "${inputs.upaas}/module.nix"
+          "${inputs.nixmy}/default.nix"
+          inputs.nix-matrix-appservices.nixosModule
+        ];
+        extraDeployAttrs.sshOpts = [ "-p" "${builtins.getEnv "NIX_SECRET_SSH_PORT"}" ];
       };
     };
   in lib.foldl' lib.recursiveUpdate {} ((lib.mapAttrsToList mkMachineDeploy machines) ++ [{

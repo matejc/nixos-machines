@@ -1,6 +1,6 @@
 { config, pkgs, my, defaultUser, machineName, ... }:
 let
-  kid = my.getSecret "kid";
+  kid = my.getSecretUnsafe "kid";
 in
 {
   boot.loader.systemd-boot.enable = true;

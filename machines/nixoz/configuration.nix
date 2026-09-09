@@ -20,10 +20,10 @@ let
     "Jellyfin Music Videos":
 
       = Dance:
-        "Dance": "${my.getSecret "playlist-dance"}"
+        "Dance": "${my.getSecretUnsafe "playlist-dance"}"
 
       = Metal:
-        "Metal": "${my.getSecret "playlist-metal"}"
+        "Metal": "${my.getSecretUnsafe "playlist-metal"}"
   '';
 
   fetch_script = pkgs.writeShellScript "fetch_script" ''
@@ -164,16 +164,16 @@ in {
       dns = {
         upstreams = config.networking.nameservers;
         hosts = [
-          "${my.getSecret "address"} media.home.arpa"
-          "${my.getSecret "address"} pihole.home.arpa"
-          # "${my.getSecret "address"} unifi.home.arpa"
-          "${my.getSecret "address"} ${config.networking.hostName}.${my.getSecret "tailscale-domain"}"
+          "${my.getSecretUnsafe "address"} media.home.arpa"
+          "${my.getSecretUnsafe "address"} pihole.home.arpa"
+          # "${my.getSecretUnsafe "address"} unifi.home.arpa"
+          "${my.getSecretUnsafe "address"} ${config.networking.hostName}.${my.getSecretUnsafe "tailscale-domain"}"
         ];
         ignoreLocalhost = true;
       };
       webserver.api = {
-        pwhash = my.getSecret "pihole-pwhash";
-        app_pwhash = my.getSecret "pihole-app-pwhash";
+        pwhash = my.getSecretUnsafe "pihole-pwhash";
+        app_pwhash = my.getSecretUnsafe "pihole-app-pwhash";
       };
     };
     lists = [
@@ -241,13 +241,13 @@ in {
       reverse_proxy http://127.0.0.1:18000
       tls internal
     '';
-    virtualHosts."${config.networking.hostName}.${my.getSecret "tailscale-domain"}:443" = {
+    virtualHosts."${config.networking.hostName}.${my.getSecretUnsafe "tailscale-domain"}:443" = {
       extraConfig = ''
         tls internal
         reverse_proxy http://127.0.0.1:8096
       '';
     };
-    virtualHosts."${config.networking.hostName}.${my.getSecret "tailscale-domain"}:80" = {
+    virtualHosts."${config.networking.hostName}.${my.getSecretUnsafe "tailscale-domain"}:80" = {
       extraConfig = ''
         reverse_proxy http://127.0.0.1:8096
       '';

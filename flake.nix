@@ -109,6 +109,7 @@
       nixoz = {
         modules = [
           ./modules/pihole-schedule.nix
+          ./modules/mktxp.nix
         ];
       };
       homepc = {
@@ -164,7 +165,7 @@
           nix build --no-link --impure ".#checks.${defaultSystem}.''${machineName}-deploy-activate"
 
           echo "Deploying $machineName to $NIX_SECRET_HOSTNAME" >&2
-          exec ${inputs.deploy-rs.packages.${defaultSystem}.default}/bin/deploy ".#$machineName" --hostname "$NIX_SECRET_HOSTNAME" --skip-checks $deployArgs -- --impure
+          exec ${inputs.deploy-rs.packages.${defaultSystem}.default}/bin/deploy ".#$machineName" --hostname "$NIX_SECRET_HOSTNAME" --skip-checks $deployArgs ''${@:4} -- --impure
         '');
       };
       encrypt = {

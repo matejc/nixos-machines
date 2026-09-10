@@ -312,6 +312,20 @@ in {
       forward_to      = [prometheus.remote_write.metrics_service.receiver]
     }
 
+    prometheus.scrape "mikrotik" {
+      targets         = [
+        { "__address__" = "127.0.0.1:${toString config.services.mktxp.listenPort}" },
+      ]
+      forward_to      = [prometheus.remote_write.metrics_service.receiver]
+    }
+
+    prometheus.scrape "pihole" {
+      targets         = [
+        { "__address__" = "127.0.0.1:${toString config.services.prometheus.exporters.pihole.port}" },
+      ]
+      forward_to      = [prometheus.remote_write.metrics_service.receiver]
+    }
+
     prometheus.remote_write "metrics_service" {
       endpoint {
         url = sys.env("PROM_URL")
@@ -322,4 +336,27 @@ in {
     enable = true;
     environmentFile = config.age.secrets.alloy-env.path;
   };
+
+  services.mktxp = {
+    enable = true;
+    configFile = config.age.secrets.mktxp-config.path;
+  };
+
+  services.prometheus.exporters.pihole = {
+    enable = true;
+    listenAddress = "127.0.0.1";
+    piholePort = 18000;
+    piholeHostname = "127.0.0.1";
+    user = "pihole-exporter";
+    group = "pihole-exporter";
+  };
+  systemd.services.prometheus-pihole-exporter.serviceConfig.EnvironmentFile = config.age.secrets.pihole-env.path;
+  age.secrets.pihole-env.owner = "pihole-exporter";
+
+  users.users.pihole-exporter = {
+    isSystemUser = true;
+    createHome = false;
+    group = "pihole-exporter";
+  };
+  users.groups.pihole-exporter = {};
 }

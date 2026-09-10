@@ -2,6 +2,6 @@
 
 action="$1"
 machineName="$2"
-identityFile="${3:-"$HOME/.ssh/id_ed25519"}"
+identityFile="${IDENTITY_FILE:-"$HOME/.ssh/id_ed25519"}"
 
-exec nix run ".#deploy" -- "$action" "$machineName" "$identityFile"
+exec nix run ".#deploy" -- "$action" "$machineName" "$identityFile" "${@:3}"

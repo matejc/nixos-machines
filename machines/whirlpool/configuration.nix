@@ -51,7 +51,6 @@ let
   slackBridgeConf = my.importNixFromSecretUnsafe "slack-bridge.nix" { inherit pkgs user matrixDomain; };
 
   searxEnvFile = config.age.secrets.searx-env.path;
-  coturnSecretFile = config.age.secrets.coturn-secret.path;
   skyrimIniFile = config.age.secrets.skyrim-ini.path;
 in
 {
@@ -249,7 +248,7 @@ in
 
   services.coturn = {
     enable = true;
-    static-auth-secret-file = coturnSecretFile;
+    static-auth-secret-file = config.age.secrets.coturn-secret.path;
     use-auth-secret = true;
     realm = matrixDomain;
     min-port = 49152;
@@ -268,7 +267,7 @@ in
       no-multicast-peers
     '';
   };
-  age.secrets.coturn-secret.owner = "coturn";
+  age.secrets.coturn-secret.owner = "turnserver";
 
   age.secrets.skyrim-ini.owner = "skyrim";
   age.secrets.corekeeper-env.owner = "corekeeper";
@@ -1019,12 +1018,13 @@ in
           "turn:${matrixDomain}?transport=udp"
           "turn:${matrixDomain}?transport=tcp"
         ];
-        turn_secret = config.services.coturn.static-auth-secret;
+        turn_secret_file = config.age.secrets.turn-secret.path;
         # force_migration = true;
       };
     };
   };
   age.secrets.matrix-reg-token.owner = "continuwuity";
+  age.secrets.turn-secret.owner = "continuwuity";
 
   services.matrix-appservices = {
     services = {

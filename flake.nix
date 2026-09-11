@@ -88,22 +88,6 @@
         "${machineName}-deploy-schema" = deployChecks.deploy-schema;
         "${machineName}-deploy-activate" = deployChecks.deploy-activate;
       };
-      apps.${defaultSystem}."${machineName}-ssh" = {
-        type = "app";
-        program = toString (pkgs.writeShellScript "ssh.sh" ''
-          set -euo pipefail
-          machineName="${machineName}"
-          identityFile="''${1?"Missing SSH identity file as first arg!"}"
-          for secretPath in "./machines/$machineName/secrets/"*.age; do
-            secretName="$(basename "$secretPath" .age)"
-            envName="$(printf 'NIX_SECRET_%s' "$secretName" | tr '[:lower:]-.' '[:upper:]__')"
-            envValue="$(${pkgs.age}/bin/age --identity "$identityFile" --decrypt "$secretPath")"
-            export "$envName=$envValue"
-          done
-          export TERM=xterm-256color
-          exec ssh -i $identityFile ${lib.join " " self.deploy.nodes.${machineName}.sshOpts} ''${NIX_SECRET_SSH_PORT:+-p "$NIX_SECRET_SSH_PORT"} ${self.deploy.nodes.${machineName}.sshUser}@$NIX_SECRET_HOSTNAME -- ''${@:2}
-        '');
-      };
     };
     machines = {
       nixoz = {
@@ -128,6 +112,22 @@
     };
   in lib.foldl' lib.recursiveUpdate {} ((lib.mapAttrsToList mkMachineDeploy machines) ++ [{
     apps.${defaultSystem} = {
+      ssh = {
+        type = "app";
+        program = toString (pkgs.writeShellScript "ssh.sh" ''
+          set -euo pipefail
+          machineName="''${1?"Missing machine name as first arg!"}"
+          identityFile="''${2?"Missing SSH identity file as first arg!"}"
+          for secretPath in "./machines/$machineName/secrets/"*.age; do
+            secretName="$(basename "$secretPath" .age)"
+            envName="$(printf 'NIX_SECRET_%s' "$secretName" | tr '[:lower:]-.' '[:upper:]__')"
+            envValue="$(${pkgs.age}/bin/age --identity "$identityFile" --decrypt "$secretPath")"
+            export "$envName=$envValue"
+          done
+          export TERM=xterm-256color
+          exec ssh -i $identityFile ''${NIX_SECRET_SSH_PORT:+-p "$NIX_SECRET_SSH_PORT"} $NIX_SECRET_SSH_USER@$NIX_SECRET_HOSTNAME -- ''${@:3}
+        '');
+      };
       deploy = {
         type = "app";
         program = toString (pkgs.writeShellScript "deploy.sh" ''

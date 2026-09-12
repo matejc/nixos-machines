@@ -981,6 +981,8 @@ in
       Port ${opensshPort}
       IdentityFile ${builderKeyFile}
   '';
+  age.secrets.builder-key.group = "hydra";
+  age.secrets.builder-key.mode = "550";
 
   services.hydra = {
     enable = true;

@@ -53,8 +53,13 @@ let
   package = pkgs.rustPlatform.buildRustPackage {
     pname = "parental-watchdog";
     version = "dev";
-    src = inputs.parental-watchdog;
-    cargoHash = "sha256-I+Fel93IYBa3zcK5kMWVZ1zJAh0UMUljYNlkr4V3OpE=";
+    src = pkgs.fetchFromGitHub {
+      owner = "matejc";
+      repo = "parental-watchdog";
+      tag = "v0.5.1";
+      hash = "sha256-2894h6G+eSonTt1BPWMx0SmsOqPC9kB3RL8yuWWehEI=";
+    };
+    cargoHash = "sha256-7RNYY0QkAcda2DYZCP28+fp+5MIvjkncgq2cLxAdsBs=";
   };
 
   package-env = pkgs.buildEnv {

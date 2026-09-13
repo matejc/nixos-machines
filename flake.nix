@@ -17,10 +17,6 @@
       url = "github:ryantm/agenix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    parental-watchdog = {
-      url = "github:matejc/parental-watchdog/v0.5.0";
-      flake = false;
-    };
     nix-matrix-appservices = {
       url = "gitlab:coffeetables/nix-matrix-appservices";
       inputs.nixpkgs.follows = "nixpkgs";

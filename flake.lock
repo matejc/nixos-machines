@@ -242,23 +242,6 @@
         "type": "github"
       }
     },
-    "parental-watchdog": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1774719201,
-        "narHash": "sha256-gFnuqztrB9UpQ7kkWhGTSJh+869I8InlW9IWRtoD4e8=",
-        "owner": "matejc",
-        "repo": "parental-watchdog",
-        "rev": "7245698199c347d98cfcaf556fe518bbe1d2a557",
-        "type": "github"
-      },
-      "original": {
-        "owner": "matejc",
-        "ref": "v0.5.0",
-        "repo": "parental-watchdog",
-        "type": "github"
-      }
-    },
     "root": {
       "inputs": {
         "agenix": "agenix",
@@ -267,7 +250,6 @@
         "nixmy": "nixmy",
         "nixos-generators": "nixos-generators",
         "nixpkgs": "nixpkgs",
-        "parental-watchdog": "parental-watchdog",
         "upaas": "upaas"
       }
     },

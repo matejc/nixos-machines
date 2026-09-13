@@ -48,7 +48,6 @@
         };
         modules = modules ++ [
           inputs.agenix.nixosModules.default
-          ./modules/my.nix
           ./modules/secrets.nix
           (./machines + "/${machineName}/configuration.nix")
           (./machines + "/${machineName}/hardware-configuration.nix")

@@ -1026,7 +1026,7 @@ in
     };
   };
   age.secrets.matrix-reg-token.owner = "continuwuity";
-  age.secrets.turn-secret.owner = "continuwuity";
+  age.secrets.turn-secret = my.cloneSecret "coturn-secret" { owner = "continuwuity"; };
 
   services.matrix-appservices = {
     services = {

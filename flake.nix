@@ -163,9 +163,9 @@
           exec ${inputs.deploy-rs.packages.${defaultSystem}.default}/bin/deploy ".#$machineName" --hostname "$NIX_SECRET_HOSTNAME" --skip-checks $deployArgs ''${@:4} -- --impure
         '');
       };
-      encrypt = {
+      edit-secret = {
         type = "app";
-        program = toString (pkgs.writeShellScript "encrypt.sh" ''
+        program = toString (pkgs.writeShellScript "edit-secret.sh" ''
           set -euo pipefail
           machineName="''${1?"Missing machine name as first arg!"}"
           secretName="''${2?"Missing secret name as second arg!"}"
@@ -192,6 +192,27 @@
             --recipients-file ./machines/$machineName/recipients \
             --output "$secretPath" \
             "$tmpDir/$secretName"
+        '');
+      };
+      read-secret = {
+        type = "app";
+        program = toString (pkgs.writeShellScript "read-secret.sh" ''
+          set -euo pipefail
+          machineName="''${1?"Missing machine name as first arg!"}"
+          secretName="''${2?"Missing secret name as second arg!"}"
+          identityFile="''${3?"Missing SSH identity file as third arg!"}"
+          if [[ ! -f "$identityFile" ]]; then
+            echo "SSH identity file does not exist!" >&2
+            exit 1
+          fi
+          mkdir -p ./machines/$machineName/secrets
+          secretPath="./machines/$machineName/secrets/$secretName.age"
+
+          if [[ -f "$secretPath" ]]; then
+            ${pkgs.age}/bin/age --identity "$identityFile" --decrypt "$secretPath"
+          else
+            echo "Secret '$secretName' for machine '$machineName' does not exist!" >&2
+          fi
         '');
       };
       reencrypt = {

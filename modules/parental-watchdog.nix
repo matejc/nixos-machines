@@ -56,10 +56,10 @@ let
     src = pkgs.fetchFromGitHub {
       owner = "matejc";
       repo = "parental-watchdog";
-      tag = "v0.5.1";
-      hash = "sha256-2894h6G+eSonTt1BPWMx0SmsOqPC9kB3RL8yuWWehEI=";
+      tag = "v0.5.2";
+      hash = "sha256-5tD4rhtZLr618mZsWJRaP8PWmtNhaVbuqC4PRz2+Epg=";
     };
-    cargoHash = "sha256-7RNYY0QkAcda2DYZCP28+fp+5MIvjkncgq2cLxAdsBs=";
+    cargoHash = "sha256-LHWgUok5qE40HRXXhXTQ1ku6pjL9QFgW9Ws+cUhVc1Q=";
   };
 
   package-env = pkgs.buildEnv {

@@ -92,6 +92,9 @@ in
   };
   users.groups.${kid} = {};
 
+  # https://github.com/NVIDIA/open-gpu-kernel-modules/issues/880
+  environment.sessionVariables.NVPRESENT_ENABLE_SMOOTH_MOTION = "1";
+
   services.parentalWatchdog = {
     enable = true;
     instances = {

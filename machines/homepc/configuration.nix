@@ -95,6 +95,14 @@ in
   # https://github.com/NVIDIA/open-gpu-kernel-modules/issues/880
   environment.sessionVariables.NVPRESENT_ENABLE_SMOOTH_MOTION = "1";
 
+  services.udev.extraRules = ''
+    # Disable wake from all USB devices, including hubs and Bluetooth.
+    ACTION=="add|change", SUBSYSTEM=="usb", TEST=="power/wakeup", ATTR{power/wakeup}=="enabled", ATTR{power/wakeup}="disabled"
+
+    # Disable wake through this machine's XHC USB controller.
+    ACTION=="add|change", SUBSYSTEM=="pci", KERNEL=="0000:00:14.0", TEST=="power/wakeup", ATTR{power/wakeup}="disabled"
+  '';
+
   services.parentalWatchdog = {
     enable = true;
     instances = {

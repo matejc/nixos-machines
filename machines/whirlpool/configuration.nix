@@ -1110,6 +1110,26 @@ in
     quietMode = true;
   };
 
+  services.homebox = {
+    enable = true;
+    settings = {
+      HBOX_WEB_HOST = "127.0.0.1";
+      HBOX_WEB_PORT = "7745";
+      HBOX_OPTIONS_ALLOW_REGISTRATION = "false";
+      HBOX_OPTIONS_ALLOW_ANALYTICS = "false";
+    };
+  };
+  services.cloudflared = {
+    enable = true;
+    tunnels.${my.getSecretUnsafe "homebox-tunnel"} = {
+      credentialsFile = config.age.secrets.cloudflared-homebox.path;
+      ingress = {
+        ${my.getSecretUnsafe "homebox-domain"} = "http://127.0.0.1:7745";
+      };
+      default = "http_status:404";
+    };
+  };
+
   time.timeZone = "Europe/Helsinki";
 
   services.qemuGuest.enable = true;

@@ -120,7 +120,7 @@
             export "$envName=$envValue"
           done
           export TERM=xterm-256color
-          exec ssh -i $identityFile ''${NIX_SECRET_SSH_PORT:+-p "$NIX_SECRET_SSH_PORT"} $NIX_SECRET_SSH_USER@$NIX_SECRET_HOSTNAME -- ''${@:3}
+          exec ssh -i $identityFile ''${NIX_SECRET_SSH_PORT:+-p "$NIX_SECRET_SSH_PORT"} $NIX_SECRET_SSH_USER@$NIX_SECRET_HOSTNAME ''${@:3}
         '');
       };
       deploy = {

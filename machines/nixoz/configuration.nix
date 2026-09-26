@@ -167,7 +167,7 @@ in {
           "${my.getSecretUnsafe "address"} media.home.arpa"
           "${my.getSecretUnsafe "address"} pihole.home.arpa"
           # "${my.getSecretUnsafe "address"} unifi.home.arpa"
-          "${my.getSecretUnsafe "address"} ${config.networking.hostName}.${my.getSecretUnsafe "tailscale-domain"}"
+          "${my.getSecretUnsafe "address"} ${config.networking.hostName}.${my.getSecretUnsafe "domain"}"
         ];
         ignoreLocalhost = true;
       };
@@ -241,13 +241,13 @@ in {
       reverse_proxy http://127.0.0.1:18000
       tls internal
     '';
-    virtualHosts."${config.networking.hostName}.${my.getSecretUnsafe "tailscale-domain"}:443" = {
+    virtualHosts."${config.networking.hostName}.${my.getSecretUnsafe "domain"}:443" = {
       extraConfig = ''
         tls internal
         reverse_proxy http://127.0.0.1:8096
       '';
     };
-    virtualHosts."${config.networking.hostName}.${my.getSecretUnsafe "tailscale-domain"}:80" = {
+    virtualHosts."${config.networking.hostName}.${my.getSecretUnsafe "domain"}:80" = {
       extraConfig = ''
         reverse_proxy http://127.0.0.1:8096
       '';
@@ -259,7 +259,10 @@ in {
     443
   ];
 
-  services.tailscale.enable = true;
+  services.netbird = {
+    enable = true;
+    useRoutingFeatures = "both";
+  };
 
   nixpkgs.config.allowUnfree = true;
 

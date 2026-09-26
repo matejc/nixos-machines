@@ -190,4 +190,6 @@ in
       dates = "daily";
     };
   };
+
+  services.netbird.enable = true;
 }

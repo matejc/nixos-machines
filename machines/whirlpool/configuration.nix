@@ -11,7 +11,7 @@ let
   gatewayv6 = my.getSecretUnsafe "gatewayv6";
   nameserver1 = my.getSecretUnsafe "nameserver1";
   nameserver2 = my.getSecretUnsafe "nameserver2";
-  tailscaleIp = my.getSecretUnsafe "tailscale-ip";
+  netbirdIp = my.getSecretUnsafe "netbird-ip";
 
   user = my.getSecretUnsafe "user";
   email = my.getSecretUnsafe "email";
@@ -232,7 +232,7 @@ in
     enable = true;
     environmentFile = searxEnvFile;
     settings = {
-      outgoing.proxies."all://" = [ "socks5://${tailscaleIp}:1080" ];
+      outgoing.proxies."all://" = [ "socks5://${netbirdIp}:1080" ];
       server = {
         secret_key = "$SEARX_SECRET_KEY";
       };
@@ -458,7 +458,7 @@ in
                 "/var/lib/llm/collector/outputs:/app/collector/outputs"
               ];
               env_file = [ "/var/lib/llm/server/.env" ];
-              ports = [ "${tailscaleIp}:3001:3001" ];
+              ports = [ "${netbirdIp}:3001:3001" ];
               network_mode = "bridge";
               cap_add = [ "SYS_ADMIN" ]; # for wep page scraping (chromium sandboxing)
             };
@@ -510,7 +510,7 @@ in
                 "net.ipv4.ip_forward=1"
               ];
               ports = [
-                "${tailscaleIp}:1080:1080"
+                "${netbirdIp}:1080:1080"
               ];
               volumes = [
                 "/var/lib/warp:/var/lib/cloudflare-warp"
@@ -597,7 +597,7 @@ in
                 "/var/lib/windrose/server-files:/home/steam/server-files"
               ];
               ports = [
-                "${tailscaleIp}:8780:8780/tcp"
+                "${netbirdIp}:8780:8780/tcp"
               ];
               stop_grace_period = "30s";
               env_file = config.age.secrets.windrose-env.path;
@@ -911,19 +911,9 @@ in
     environmentFile = alloyEnvFile;
   };
 
-  services.tailscale.enable = true;
-  networking.firewall.checkReversePath = "loose";
-  boot.kernel.sysctl."net.ipv4.ip_forward" = true;
-  boot.kernel.sysctl."net.ipv6.conf.all.forwarding" = true;
-
-  systemd.services."rx-udp-gro" = {
-    description = "rx-udp-gro for Tailscale";
-    wantedBy = [ "systemd-networkd-wait-online.service" ];
-    after = [ "systemd-networkd-wait-online.service" ];
-    script = ''
-      ${pkgs.ethtool}/bin/ethtool -K ens3 rx-udp-gro-forwarding on rx-gro-list off
-    '';
-    serviceConfig.Type = "simple";
+  services.netbird = {
+    enable = true;
+    useRoutingFeatures = "both";
   };
 
   services.earlyoom.enable = true;
@@ -1103,7 +1093,7 @@ in
       warp = {
         enable = true;
         type = "socks5";
-        host = tailscaleIp;
+        host = netbirdIp;
         port = 1080;
       };
     };

@@ -90,13 +90,18 @@ in {
     };
   };
 
-  programs.nh = {
+  services.fast-nix-gc = {
     enable = true;
-    clean = {
-      enable = true;
-      extraArgs = "--keep 10 --keep-since 7d";
-      dates = "daily";
-    };
+    automatic = true;
+    dates = "weekly";
+    deleteOlderThan = "30d";
+    ensureFree = "50G";
+    keepRecent = "1d";
+  };
+  services.fast-nix-optimise = {
+    enable = true;
+    automatic = true;
+    dates = "weekly";
   };
 
   hardware.enableRedistributableFirmware = true;

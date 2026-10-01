@@ -25,6 +25,10 @@
       url = "github:matejc/nixmy/master";
       flake = false;
     };
+    fast-nix-gc = {
+      url = "github:Mic92/fast-nix-gc";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs = { self, ... }@inputs: let
     defaultSystem = "x86_64-linux";
@@ -45,6 +49,7 @@
         modules = modules ++ [
           inputs.agenix.nixosModules.default
           ./modules/secrets.nix
+          inputs.fast-nix-gc.nixosModules.default
           (./machines + "/${machineName}/configuration.nix")
           (./machines + "/${machineName}/hardware-configuration.nix")
         ];

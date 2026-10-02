@@ -34,6 +34,8 @@ let
   matrixDomain = my.getSecretUnsafe "matrix-domain";
   myipDomain = my.getSecretUnsafe "myip-domain";
   jitsiDomain = my.getSecretUnsafe "jitsi-domain";
+  talkHpbDomain = my.getSecretUnsafe "talk-hpb-domain";
+  ncDomain = my.getSecretUnsafe "nc-domain";
 
   harmoniaSecretFile = config.age.secrets.harmonia-secret.path;
   searxBasicAuthFile = config.age.secrets.searx-basic-auth.path;
@@ -262,7 +264,6 @@ in
       listening-ip=${ip}
       relay-ip=${ip}
       server-name=${matrixDomain}
-      lt-cred-mech
       no-loopback-peers
       no-multicast-peers
     '';
@@ -1124,6 +1125,42 @@ in
       default = "http_status:404";
     };
   };
+
+  services.caddy.virtualHosts.${talkHpbDomain}.extraConfig = ''
+    reverse_proxy 127.0.0.1:18080
+  '';
+  services.nextcloud-spreed-signaling = {
+    enable = true;
+    hostName = talkHpbDomain;
+    configureNginx = false;
+    backends.nc = {
+      urls = [ "https://${ncDomain}" ];
+      secretFile = config.age.secrets.nextcloud-talk-backend-secret.path;
+    };
+    settings = {
+      http.listen = "127.0.0.1:18080";
+      backend.allowall = false;
+      clients.internalsecretFile = config.age.secrets.nextcloud-talk-internal-secret.path;
+      sessions = {
+        hashkeyFile = config.age.secrets.nextcloud-talk-hash-key.path;
+        blockkeyFile = config.age.secrets.nextcloud-talk-block-key.path;
+      };
+      turn = {
+        servers = [
+          "turn:${matrixDomain}:3478?transport=udp"
+          "turn:${matrixDomain}:3478?transport=tcp"
+        ];
+        secretFile = config.age.secrets.hpb-turn-secret.path;
+        apikeyFile = config.age.secrets.nextcloud-talk-turn-api-key.path;
+      };
+    };
+  };
+  age.secrets.nextcloud-talk-backend-secret.owner = config.services.nextcloud-spreed-signaling.user;
+  age.secrets.nextcloud-talk-internal-secret.owner = config.services.nextcloud-spreed-signaling.user;
+  age.secrets.nextcloud-talk-hash-key.owner = config.services.nextcloud-spreed-signaling.user;
+  age.secrets.nextcloud-talk-block-key.owner = config.services.nextcloud-spreed-signaling.user;
+  age.secrets.nextcloud-talk-turn-api-key.owner = config.services.nextcloud-spreed-signaling.user;
+  age.secrets.hpb-turn-secret = my.cloneSecret "coturn-secret" { owner = config.services.nextcloud-spreed-signaling.user; };
 
   time.timeZone = "Europe/Helsinki";
 

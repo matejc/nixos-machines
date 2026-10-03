@@ -36,6 +36,17 @@ let
     ${(import ./jellyfin { inherit pkgs; }).build}
   '';
 in {
+  nixpkgs.overlays = [
+    (final: prev: {
+      # https://github.com/NixOS/nixpkgs/issues/568900
+      pihole-ftl = prev.pihole-ftl.overrideAttrs (new: old: {
+        env = (old.env or { }) // {
+          NIX_CFLAGS_COMPILE = "${old.env.NIX_CFLAGS_COMPILE or ""} -Wno-error=unused-but-set-variable";
+        };
+      });
+    })
+  ];
+
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
@@ -81,7 +92,7 @@ in {
   nix = {
     channel.enable = false;
     settings = {
-      nix-path = "nixpkgs=${inputs.nixpkgs}";
+      nix-path = [ "nixpkgs=${inputs.nixpkgs}" ];
       experimental-features = [
         "nix-command"
         "flakes"

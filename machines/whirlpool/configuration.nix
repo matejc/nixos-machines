@@ -218,20 +218,22 @@ in
     };
   };
 
-  services.caddy.virtualHosts.${searxDomain}.extraConfig = ''
-    handle_path /static/* {
-        root * ${config.services.searx.package}/share/static
-        file_server
-    }
-    handle {
-        basic_auth {
-            import ${searxBasicAuthFile}
-        }
-        reverse_proxy http://${config.services.searx.uwsgiConfig.http}
-    }
-  '';
+  services.caddy.virtualHosts.${searxDomain} = lib.mkIf config.services.searx.enable {
+    extraConfig = ''
+      handle_path /static/* {
+          root * ${config.services.searx.package}/share/static
+          file_server
+      }
+      handle {
+          basic_auth {
+              import ${searxBasicAuthFile}
+          }
+          reverse_proxy http://${config.services.searx.uwsgiConfig.http}
+      }
+    '';
+  };
   services.searx = {
-    enable = true;
+    enable = false;
     environmentFile = searxEnvFile;
     settings = {
       outgoing.proxies."all://" = [ "socks5://${netbirdIp}:1080" ];

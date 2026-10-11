@@ -18,7 +18,6 @@ let
 
   matej70Pub = my.getSecretUnsafe "matej70-pub";
   matej80Pub = my.getSecretUnsafe "matej80-pub";
-  builderPub = my.getSecretUnsafe "builder-pub";
 
   opensshPort = my.getSecretUnsafe "ssh-port";
 
@@ -41,7 +40,6 @@ let
   searxBasicAuthFile = config.age.secrets.searx-basic-auth.path;
 
   alloyEnvFile = config.age.secrets.alloy-env.path;
-  builderKeyFile = config.age.secrets.builder-key.path;
 
   matrixRegTokenFile = config.age.secrets.matrix-reg-token.path;
 
@@ -652,15 +650,7 @@ in
 
   nix.settings.trusted-users = [
     "@wheel"
-    "builder"
   ];
-
-  users.users.builder = {
-    isNormalUser = true;
-    group = "builder";
-    openssh.authorizedKeys.keys = [ builderPub ];
-  };
-  users.groups.builder = { };
 
   users.users.corekeeper = {
     isNormalUser = true;
@@ -936,8 +926,6 @@ in
     dates = "weekly";
   };
 
-  # nix.settings.cores = 12;
-  # nix.settings.max-jobs = 2;
   nix.settings.extra-experimental-features = [
     "nix-command"
     "flakes"
@@ -953,34 +941,6 @@ in
     "https://api.flakehub.com/"
     "https://releases.nixos.org/"
   ];
-  nix.buildMachines = [
-    {
-      hostName = "local-builder";
-      maxJobs = 2;
-      sshKey = builderKeyFile;
-      sshUser = "builder";
-      supportedFeatures = [
-        "benchmark"
-        "big-parallel"
-        "kvm"
-        "nixos-test"
-      ];
-      systems = [
-        "i686-linux"
-        "x86_64-linux"
-        "aarch64-linux"
-      ];
-    }
-  ];
-  programs.ssh.extraConfig = ''
-    Host local-builder
-      User builder
-      HostName 127.0.0.1
-      Port ${opensshPort}
-      IdentityFile ${builderKeyFile}
-  '';
-  age.secrets.builder-key.group = "hydra";
-  age.secrets.builder-key.mode = "550";
 
   services.hydra = {
     enable = true;
@@ -991,14 +951,33 @@ in
     listenHost = "127.0.0.1";
     hydraURL = "https://${hydraDomain}";
     notificationSender = "hydra@localhost";
-    # a standalone hydra will require you to unset the buildMachinesFiles list to avoid using a nonexistant /etc/nix/machines
-    # buildMachinesFiles = [];
     # you will probably also want, otherwise *everything* will be built from scratch
     useSubstitutes = true;
+    queueRunner.grpc.address = "127.0.0.1";
+    # queueRunner.settings.machineFreeFn = "DynamicWithMaxJobLimit";
   };
   systemd.tmpfiles.rules = [
     "d /var/cache/hydra                0755 hydra-queue-runner hydra -  -"
   ];
+  services.hydra-builder = {
+    enable = true;
+    queueRunnerAddr = "http://${config.services.hydra.queueRunner.grpc.address}:${toString config.services.hydra.queueRunner.grpc.port}";
+    settings = {
+      # maxJobs = 2;
+      supportedFeatures = [
+        "benchmark"
+        "big-parallel"
+        "kvm"
+        "nixos-test"
+      ];
+      systems = [
+        # "builtin"
+        "i686-linux"
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
+    };
+  };
 
   services.matrix-continuwuity = {
     enable = true;

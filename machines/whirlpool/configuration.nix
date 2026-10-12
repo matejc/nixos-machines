@@ -944,26 +944,17 @@ in
 
   services.hydra = {
     enable = true;
-    package = pkgs.hydra.overrideAttrs (old: {
-      doCheck = false;
-    });
     port = 54444;
     listenHost = "127.0.0.1";
     hydraURL = "https://${hydraDomain}";
     notificationSender = "hydra@localhost";
-    # you will probably also want, otherwise *everything* will be built from scratch
     useSubstitutes = true;
     queueRunner.grpc.address = "127.0.0.1";
-    # queueRunner.settings.machineFreeFn = "DynamicWithMaxJobLimit";
   };
-  systemd.tmpfiles.rules = [
-    "d /var/cache/hydra                0755 hydra-queue-runner hydra -  -"
-  ];
   services.hydra-builder = {
     enable = true;
     queueRunnerAddr = "http://${config.services.hydra.queueRunner.grpc.address}:${toString config.services.hydra.queueRunner.grpc.port}";
     settings = {
-      # maxJobs = 2;
       supportedFeatures = [
         "benchmark"
         "big-parallel"
@@ -971,9 +962,8 @@ in
         "nixos-test"
       ];
       systems = [
-        # "builtin"
-        "i686-linux"
         "x86_64-linux"
+        "i686-linux"
         "aarch64-linux"
       ];
     };

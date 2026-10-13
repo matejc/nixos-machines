@@ -950,6 +950,14 @@ in
     notificationSender = "hydra@localhost";
     useSubstitutes = true;
     queueRunner.grpc.address = "127.0.0.1";
+    queueRunner.package = pkgs.hydra-queue-runner.overrideAttrs (old: {
+      src = pkgs.fetchFromGitHub {
+        owner = "matejc";
+        repo = "hydra";
+        rev = "23205ecb4ab72fa1d5069d9ffa7ecc7fa0f4ac6b"; # fix/hydra-queue-runner
+        hash = "sha256-YngGjgrI3TUVDNaE03G7ICVlLE3DkEEQ0KQAV90Cmko=";
+      };
+    });
   };
   services.hydra-builder = {
     enable = true;
